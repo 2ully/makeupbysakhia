@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mekup by Sakhia — Makeup Artist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announcement-bar">
+  Limited spots available for Summer 2026 — <a href="#booking">Book Today &rarr;</a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <ul id="nav-links" class="nav-left">
+    <li><a href="#services" onclick="closeMenu()">Services</a></li>
+    <li><a href="#gallery" onclick="closeMenu()">Gallery</a></li>
+    <li><a href="#about" onclick="closeMenu()">About</a></li>
+  </ul>
+  <a class="logo" href="#">mekup <span>by sakhia</span></a>
+  <ul id="nav-links-right" class="nav-right">
+    <li><a href="#testimonials" onclick="closeMenu()">Reviews</a></li>
+    <li><a href="#booking" onclick="closeMenu()">Contact</a></li>
+    <li><a href="#booking" class="nav-book" onclick="closeMenu()">Book Online</a></li>
+  </ul>
+  <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-content">
+    <span class="hero-tag">✦ Professional Makeup Artist</span>
+    <h1>Look Your Most <em>Radiant</em> Self</h1>
+    <p>Bridal, glam, editorial, and everyday looks crafted with precision and artistry — tailored to celebrate your unique beauty.</p>
+    <div class="hero-buttons">
+      <a href="#booking" class="btn btn-primary">Book a Session</a>
+      <a href="#gallery" class="btn btn-outline">View Gallery</a>
+    </div>
+  </div>
+</section>
+
+<!-- EXPLORE BY CATEGORY -->
+<section id="explore">
+  <p class="section-label">Browse My Work</p>
+  <h2>Explore by Category</h2>
+  <div class="explore-grid">
+    <div class="explore-card" onclick="filterGallery('bridal', null); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+      <div class="explore-card-bg bridal"></div>
+      <div class="explore-card-overlay">
+        <h3>Bridal Looks</h3>
+        <a class="explore-more" href="#gallery">Explore More</a>
+      </div>
+    </div>
+    <div class="explore-card" onclick="filterGallery('glam', null); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+      <div class="explore-card-bg glam"></div>
+      <div class="explore-card-overlay">
+        <h3>Glam &amp; Events</h3>
+        <a class="explore-more" href="#gallery">Explore More</a>
+      </div>
+    </div>
+    <div class="explore-card" onclick="filterGallery('editorial', null); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+      <div class="explore-card-bg editorial"></div>
+      <div class="explore-card-overlay">
+        <h3>Editorial</h3>
+        <a class="explore-more" href="#gallery">Explore More</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <p class="section-label">What I Offer</p>
+  <h2>Services</h2>
+  <p class="section-sub">From intimate ceremonies to bold editorial shoots, every service is tailored to your vision.</p>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-icon">💍</div>
+      <h3>Bridal Makeup</h3>
+      <p>Long-wearing, photographer-ready looks for your wedding day. Includes trial session and touch-up kit.</p>
+      <p class="service-price">From $250</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">✨</div>
+      <h3>Glam &amp; Special Events</h3>
+      <p>Full-glam looks for galas, parties, proms, and celebrations — bold or soft, your choice.</p>
+      <p class="service-price">From $120</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">📸</div>
+      <h3>Editorial &amp; Photoshoots</h3>
+      <p>Camera-ready artistry for fashion shoots, headshots, and creative projects.</p>
+      <p class="service-price">From $180</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🌿</div>
+      <h3>Natural &amp; Everyday</h3>
+      <p>Polished, fresh-faced looks perfect for corporate headshots, dates, or daytime events.</p>
+      <p class="service-price">From $80</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">👥</div>
+      <h3>Group &amp; Bridal Party</h3>
+      <p>Coordinated looks for bridesmaids, moms, and bridal parties with group rate discounts.</p>
+      <p class="service-price">From $90/person</p>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🎨</div>
+      <h3>Makeup Lesson</h3>
+      <p>One-on-one session to learn techniques, product picks, and a routine that works for your lifestyle.</p>
+      <p class="service-price">From $100/hr</p>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <p class="section-label">Portfolio</p>
+  <h2>Gallery</h2>
+  <p class="section-sub">A glimpse into recent work — hover to explore, click to expand.</p>
+  <div class="gallery-filter">
+    <button class="filter-btn active" onclick="filterGallery('all', this)">All</button>
+    <button class="filter-btn" onclick="filterGallery('bridal', this)">Bridal</button>
+    <button class="filter-btn" onclick="filterGallery('glam', this)">Glam</button>
+    <button class="filter-btn" onclick="filterGallery('natural', this)">Natural</button>
+    <button class="filter-btn" onclick="filterGallery('editorial', this)">Editorial</button>
+  </div>
+  <div class="gallery-grid" id="gallery-grid">
+    <!-- To add real photos: replace each div with an <img> tag inside .gallery-item,
+         keeping data-category, data-title, and data-sub attributes. -->
+    <div class="gallery-item bridal" data-category="bridal" data-title="Romantic Bridal" data-sub="Soft glam · 2025" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Romantic Bridal</h4><span>Soft glam · 2025</span></div>
+    </div>
+    <div class="gallery-item glam" data-category="glam" data-title="Golden Hour Glam" data-sub="Evening gala · 2025" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Golden Hour Glam</h4><span>Evening gala · 2025</span></div>
+    </div>
+    <div class="gallery-item natural" data-category="natural" data-title="Fresh &amp; Dewy" data-sub="Editorial shoot · 2025" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Fresh &amp; Dewy</h4><span>Editorial shoot · 2025</span></div>
+    </div>
+    <div class="gallery-item editorial" data-category="editorial" data-title="Dark Fantasy" data-sub="Fashion editorial · 2024" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Dark Fantasy</h4><span>Fashion editorial · 2024</span></div>
+    </div>
+    <div class="gallery-item bridal" data-category="bridal" data-title="Classic Bride" data-sub="Wedding · 2024" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Classic Bride</h4><span>Wedding · 2024</span></div>
+    </div>
+    <div class="gallery-item glam" data-category="glam" data-title="Smoky Glam" data-sub="Birthday shoot · 2025" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Smoky Glam</h4><span>Birthday shoot · 2025</span></div>
+    </div>
+    <div class="gallery-item natural" data-category="natural" data-title="Sun-Kissed Natural" data-sub="Headshot session · 2025" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Sun-Kissed Natural</h4><span>Headshot session · 2025</span></div>
+    </div>
+    <div class="gallery-item editorial" data-category="editorial" data-title="Avant-Garde" data-sub="Magazine shoot · 2024" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Avant-Garde</h4><span>Magazine shoot · 2024</span></div>
+    </div>
+    <div class="gallery-item bridal" data-category="bridal" data-title="Garden Bride" data-sub="Outdoor wedding · 2025" onclick="openLightbox(this)">
+      <div class="gallery-overlay"><h4>Garden Bride</h4><span>Outdoor wedding · 2025</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-inner">
+    <div class="about-image">🌸</div>
+    <div class="about-text">
+      <p class="section-label">About Me</p>
+      <h2>Hi, I'm Skhia</h2>
+      <p>I'm a professional makeup artist with over 8 years of experience transforming looks for weddings, editorial shoots, and special events. Based locally and available for travel.</p>
+      <p>My philosophy is simple: makeup should enhance who you already are. I work with your features, skin tone, and personal style to create a look that feels authentically you — whether that's a barely-there glow or full editorial drama.</p>
+      <p>Certified in advanced bridal techniques and airbrush application, I stay current with industry trends while never losing sight of timeless beauty.</p>
+      <div class="stats">
+        <div>
+          <div class="stat-num">8+</div>
+          <div class="stat-label">Years Experience</div>
+        </div>
+        <div>
+          <div class="stat-num">500+</div>
+          <div class="stat-label">Clients Served</div>
+        </div>
+        <div>
+          <div class="stat-num">150+</div>
+          <div class="stat-label">Weddings</div>
+        </div>
+      </div>
+      <a href="#booking" class="btn btn-primary">Work With Me</a>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <p class="section-label">Client Love</p>
+  <h2>Reviews</h2>
+  <p class="section-sub">What clients say after their sessions.</p>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p>"Skhia made me feel like the most beautiful version of myself on my wedding day. My makeup lasted 14 hours and looked flawless in every photo. I couldn't recommend her more!"</p>
+      <div class="testimonial-author">Amara J.</div>
+      <div class="testimonial-event">Bridal Makeup · June 2025</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p>"I booked Skhia for a gala and she absolutely delivered. The smoky eye she created was everything I envisioned. Professional, punctual, and incredibly talented."</p>
+      <div class="testimonial-author">Priya M.</div>
+      <div class="testimonial-event">Glam Event · March 2025</div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p>"My whole bridal party looked stunning. Skhia kept everyone calm and happy while delivering stunning looks in record time. An absolute gem to work with!"</p>
+      <div class="testimonial-author">Sophie &amp; Party</div>
+      <div class="testimonial-event">Bridal Party · April 2025</div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING -->
+<section id="booking">
+  <div class="booking-inner">
+    <div class="booking-info">
+      <p class="section-label">Let's Connect</p>
+      <h2>Book a Session</h2>
+      <p>Ready to glow? Fill out the form and I'll get back to you within 24 hours to confirm availability and discuss your vision.</p>
+      <ul class="contact-list">
+        <li><span class="icon">📧</span> hello@mekupbyskhia.com</li>
+        <li><span class="icon">📱</span> +1 (555) 000-0000</li>
+        <li><span class="icon">📍</span> Available for travel &amp; on-location</li>
+        <li><span class="icon">📅</span> Mon – Sat · 8am – 7pm</li>
+      </ul>
+    </div>
+    <div>
+      <form id="booking-form" onsubmit="submitForm(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" name="fname" placeholder="Jane" required />
+          </div>
+          <div class="form-group">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" name="lname" placeholder="Doe" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="jane@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="service">Service</label>
+            <select id="service" name="service" required>
+              <option value="" disabled selected>Select a service</option>
+              <option>Bridal Makeup</option>
+              <option>Glam &amp; Special Events</option>
+              <option>Editorial &amp; Photoshoots</option>
+              <option>Natural &amp; Everyday</option>
+              <option>Group / Bridal Party</option>
+              <option>Makeup Lesson</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="date">Preferred Date</label>
+            <input type="date" id="date" name="date" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="message">Tell Me About Your Vision</label>
+          <textarea id="message" name="message" placeholder="Describe the look you have in mind, event details, skin concerns, inspo images…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary form-submit">Send Booking Request ✦</button>
+      </form>
+      <div class="form-success" id="form-success">
+        <div class="checkmark">✦</div>
+        <h3>Request Sent!</h3>
+        <p>Thank you! I'll be in touch within 24 hours to confirm your session details.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <a class="logo" href="#">Mekup by Skhia</a>
+      <p>Professional makeup artistry for weddings, events, and editorial projects. Making you shine is my passion.</p>
+      <div class="socials">
+        <a href="#" class="social-btn" aria-label="Instagram">📸</a>
+        <a href="#" class="social-btn" aria-label="TikTok">🎵</a>
+        <a href="#" class="social-btn" aria-label="Pinterest">📌</a>
+        <a href="#" class="social-btn" aria-label="Facebook">💬</a>
+      </div>
+    </div>
+    <div class="footer-links">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#testimonials">Reviews</a></li>
+        <li><a href="#booking">Book Now</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#booking">Bridal Makeup</a></li>
+        <li><a href="#booking">Glam Events</a></li>
+        <li><a href="#booking">Editorial</a></li>
+        <li><a href="#booking">Natural Looks</a></li>
+        <li><a href="#booking">Makeup Lessons</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; 2026 Mekup by Skhia &middot; All rights reserved &middot; Made with &hearts;
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lightbox-content" id="lightbox-content">
+    <button class="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
