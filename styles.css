@@ -284,6 +284,10 @@ h2 {
   color: var(--terracotta); letter-spacing: 1px;
   text-transform: uppercase;
 }
+.service-note {
+  margin-top: 32px;
+  font-size: 0.75rem; color: var(--brown-mid); font-style: italic;
+}
 
 /* ── GALLERY ── */
 #gallery { background: var(--warm-white); text-align: center; }
