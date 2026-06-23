@@ -748,6 +748,17 @@ h2 {
   font-weight: 300;
 }
 
+.contact-list li a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s, text-decoration 0.3s;
+}
+
+.contact-list li a:hover {
+  color: var(--brown-dark);
+  text-decoration: underline;
+}
+
 .contact-list .icon {
   width: 36px;
   height: 36px;

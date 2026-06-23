@@ -75,14 +75,14 @@
           <a class="explore-more" href="#gallery">Explore More</a>
         </div>
       </div>
-      <div class="explore-card"
+      <!--    <div class="explore-card"
         onclick="filterGallery('editorial', null); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
         <div class="explore-card-bg editorial"></div>
         <div class="explore-card-overlay">
           <h3>Editorial</h3>
           <a class="explore-more" href="#gallery">Explore More</a>
         </div>
-      </div>
+      </div> -->
     </div>
   </section>
 
@@ -188,12 +188,7 @@
           <h4>Avant-Garde</h4><span>Magazine shoot · 2024</span>
         </div>
       </div>
-      <div class="gallery-item bridal" data-category="bridal" data-title="Garden Bride"
-        data-sub="Outdoor wedding · 2025" onclick="openLightbox(this)">
-        <div class="gallery-overlay">
-          <h4>Garden Bride</h4><span>Outdoor wedding · 2025</span>
-        </div>
-      </div>
+
     </div>
   </section>
 
@@ -265,10 +260,10 @@
         <p>Ready to glow? Fill out the form and I'll get back to you within 24 hours to confirm availability and discuss
           your vision.</p>
         <ul class="contact-list">
-          <li><span class="icon">📧</span> hello@mekupbyskhia.com</li>
-          <li><span class="icon">📱</span> +1 (555) 000-0000</li>
-          <li><span class="icon">📍</span> Available for travel &amp; on-location</li>
-          <li><span class="icon">📅</span> Mon – Sat · 8am – 7pm</li>
+          <li><span class="icon">📧</span> <a href="mailto:sakiaalhinai@gmail.com">sakiaalhinai@gmail.com</a></li>
+          <li><span class="icon">📱</span> <a href="https://wa.me/96890653614" target="_blank">+968 90653614</a></li>
+          <li><span class="icon">📍</span> <a href="https://maps.app.goo.gl/vdzYFWAyK1vTFFFG6" target="_blank">Available for travel &amp; on-location</a></li>
+          <li><span class="icon">📅</span> Sunday – Friday · 1pm – 6pm</li>
         </ul>
       </div>
       <div>
@@ -283,30 +278,37 @@
               <input type="text" id="lname" name="lname" placeholder="Doe" required />
             </div>
           </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="jane@example.com" required />
-          </div>
-          <div class="form-group">
-            <label for="phone">Phone</label>
-            <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" />
-          </div>
           <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" name="phone" placeholder="+968 9065 3614" required />
+            </div>
             <div class="form-group">
               <label for="service">Service</label>
               <select id="service" name="service" required>
                 <option value="" disabled selected>Select a service</option>
-                <option>Bridal Makeup</option>
                 <option>Glam &amp; Special Events</option>
                 <option>Editorial &amp; Photoshoots</option>
-                <option>Natural &amp; Everyday</option>
-                <option>Group / Bridal Party</option>
-                <option>Makeup Lesson</option>
+                <option>Graduation Makeup</option>
               </select>
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label for="date">Preferred Date</label>
               <input type="date" id="date" name="date" required />
+            </div>
+            <div class="form-group">
+              <label for="time">Preferred Time</label>
+              <select id="time" name="time" required>
+                <option value="" disabled selected>Select a time</option>
+                <option>1:00 PM</option>
+                <option>2:00 PM</option>
+                <option>3:00 PM</option>
+                <option>4:00 PM</option>
+                <option>5:00 PM</option>
+                <option>6:00 PM</option>
+              </select>
             </div>
           </div>
           <div class="form-group">
@@ -334,9 +336,7 @@
         </p>
         <div class="socials">
           <a href="#" class="social-btn" aria-label="Instagram">📸</a>
-          <a href="#" class="social-btn" aria-label="TikTok">🎵</a>
-          <a href="#" class="social-btn" aria-label="Pinterest">📌</a>
-          <a href="#" class="social-btn" aria-label="Facebook">💬</a>
+          <a href="#" class="social-btn" aria-label="Whatsapp">💬</a>
         </div>
       </div>
       <div class="footer-links">
@@ -344,19 +344,15 @@
         <ul>
           <li><a href="#services">Services</a></li>
           <li><a href="#gallery">Gallery</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#testimonials">Reviews</a></li>
           <li><a href="#booking">Book Now</a></li>
         </ul>
       </div>
       <div class="footer-links">
         <h4>Services</h4>
         <ul>
-          <li><a href="#booking">Bridal Makeup</a></li>
           <li><a href="#booking">Glam Events</a></li>
           <li><a href="#booking">Editorial</a></li>
-          <li><a href="#booking">Natural Looks</a></li>
-          <li><a href="#booking">Makeup Lessons</a></li>
+          <li><a href="#booking">Graduations</a></li>
         </ul>
       </div>
     </div>
