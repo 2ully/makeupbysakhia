@@ -24,20 +24,32 @@ function filterGallery(cat, btn) {
 function openLightbox(el) {
   const lb = document.getElementById('lightbox');
   const content = document.getElementById('lightbox-content');
-  content.style.background = getComputedStyle(el).background;
-  let overlay = content.querySelector('.gallery-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.className = 'gallery-overlay';
-    content.appendChild(overlay);
+
+  // Clear any previously loaded lightbox image or overlay
+  const oldImg = content.querySelector('.lightbox-img');
+  if (oldImg) oldImg.remove();
+  const oldOverlay = content.querySelector('.gallery-overlay');
+  if (oldOverlay) oldOverlay.remove();
+
+  // Check if the gallery item contains an img tag
+  const img = el.querySelector('img');
+  if (img) {
+    // If it has an image, clear the background style and append a new img element
+    content.style.background = 'none';
+    const newImg = document.createElement('img');
+    newImg.src = img.src;
+    newImg.alt = img.alt || '';
+    newImg.className = 'lightbox-img';
+    content.appendChild(newImg);
+  } else {
+    // Fallback to gradient background if no image is present
+    content.style.background = getComputedStyle(el).background;
   }
-  overlay.style.opacity = '1';
-  overlay.innerHTML =
-    '<h4 style="color:#fff;font-size:1.2rem;margin-bottom:8px">' + el.dataset.title + '</h4>' +
-    '<span style="color:rgba(255,255,255,.8);font-family:Arial,sans-serif;font-size:.85rem">' + el.dataset.sub + '</span>';
+
   lb.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
+
 
 function closeLightbox(e) {
   if (!e || e.target === document.getElementById('lightbox') || e.currentTarget === document.querySelector('.lightbox-close')) {
@@ -46,7 +58,7 @@ function closeLightbox(e) {
   }
 }
 
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
     document.getElementById('lightbox').classList.remove('open');
     document.body.style.overflow = '';
@@ -61,8 +73,8 @@ function submitForm(e) {
 }
 
 // Scroll reveal
-var observer = new IntersectionObserver(function(entries) {
-  entries.forEach(function(entry) {
+var observer = new IntersectionObserver(function (entries) {
+  entries.forEach(function (entry) {
     if (entry.isIntersecting) {
       entry.target.style.opacity = '1';
       entry.target.style.transform = 'translateY(0)';
@@ -70,7 +82,7 @@ var observer = new IntersectionObserver(function(entries) {
   });
 }, { threshold: 0.1 });
 
-document.querySelectorAll('.service-card, .gallery-item, .testimonial-card').forEach(function(el) {
+document.querySelectorAll('.service-card, .gallery-item, .testimonial-card').forEach(function (el) {
   el.style.opacity = '0';
   el.style.transform = 'translateY(20px)';
   el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
