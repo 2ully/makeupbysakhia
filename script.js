@@ -68,8 +68,43 @@ document.addEventListener('keydown', function (e) {
 // Booking form
 function submitForm(e) {
   e.preventDefault();
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('form-success').style.display = 'block';
+
+  const form = document.getElementById('booking-form');
+  const btn = form.querySelector('button[type="submit"]');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  const data = {
+    fname: form.fname.value,
+    lname: form.lname.value,
+    phone: form.phone.value,
+    service: form.service.value,
+    date: form.date.value,
+    time: form.time.value,
+    message: form.message.value,
+  };
+
+  fetch('/api/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+    .then(function (res) { return res.json(); })
+    .then(function (result) {
+      if (result.success) {
+        form.style.display = 'none';
+        document.getElementById('form-success').style.display = 'block';
+      } else {
+        alert('Something went wrong. Please try again.');
+        btn.textContent = 'Send Booking Request ✦';
+        btn.disabled = false;
+      }
+    })
+    .catch(function () {
+      alert('Network error. Please check your connection and try again.');
+      btn.textContent = 'Send Booking Request ✦';
+      btn.disabled = false;
+    });
 }
 
 // Scroll reveal
