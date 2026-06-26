@@ -1095,3 +1095,94 @@ footer>.footer-inner>div>p {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── LANGUAGE TOGGLE ── */
+.lang-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--brown-mid);
+  font-family: 'Jost', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.lang-toggle:hover {
+  border-color: var(--brown-dark);
+  color: var(--brown-dark);
+}
+
+/* Mobile-only toggle that sits next to the hamburger. Hidden on desktop. */
+.nav-lang-mobile {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  nav {
+    grid-template-columns: 1fr auto auto;
+    column-gap: 14px;
+  }
+
+  .nav-lang-mobile {
+    display: inline-flex;
+    align-items: center;
+    justify-self: end;
+  }
+}
+
+/* ── ARABIC TYPOGRAPHY (applied when the page is in Arabic) ── */
+html[lang="ar"] body {
+  font-family: 'Tajawal', sans-serif;
+}
+
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] h4,
+html[lang="ar"] .hero-tag,
+html[lang="ar"] nav ul a,
+html[lang="ar"] .section-label,
+html[lang="ar"] .section-sub,
+html[lang="ar"] .btn,
+html[lang="ar"] label,
+html[lang="ar"] input,
+html[lang="ar"] select,
+html[lang="ar"] textarea,
+html[lang="ar"] .service-price,
+html[lang="ar"] .service-note,
+html[lang="ar"] .filter-btn,
+html[lang="ar"] .lang-toggle,
+html[lang="ar"] .gallery-overlay h4,
+html[lang="ar"] .gallery-overlay span,
+html[lang="ar"] .explore-card-overlay h3,
+html[lang="ar"] .explore-more,
+html[lang="ar"] .footer-links h4,
+html[lang="ar"] .footer-links a,
+html[lang="ar"] .footer-bottom,
+html[lang="ar"] .contact-list,
+html[lang="ar"] .availability-note,
+html[lang="ar"] .form-success h3 {
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Letter-spacing breaks Arabic letter-joining — turn it off for Arabic text. */
+html[lang="ar"] nav ul a,
+html[lang="ar"] .section-label,
+html[lang="ar"] .hero-tag,
+html[lang="ar"] .btn,
+html[lang="ar"] .filter-btn,
+html[lang="ar"] label,
+html[lang="ar"] .nav-book,
+html[lang="ar"] .lang-toggle {
+  letter-spacing: normal;
+}
+
+/* ── RTL LAYOUT FIXES ── */
+[dir="rtl"] .service-card {
+  text-align: right;
+}

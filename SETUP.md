@@ -75,6 +75,19 @@ Vercel auto-deploys and installs the new dependencies (`@supabase/supabase-js`, 
 
 To see all bookings any time: Supabase → **Table Editor** → `bookings`.
 
+## Update: Arabic language column (run once if you set up the table BEFORE Arabic support)
+
+The booking table now stores which language the customer used, so their email comes
+in that language. If you already created the table earlier, add the new column once:
+
+Supabase → **SQL Editor** → **New query** → paste → **Run**:
+
+```sql
+alter table public.bookings add column if not exists lang text not null default 'en';
+```
+
+(Fresh setups using the latest `supabase-setup.sql` already include this — no action needed.)
+
 ## Notes
 - The old `RESEND_API_KEY` is no longer used — you can delete it from Vercel if you added it.
 - Times offered: 1–6 PM, max 4 bookings/day. To change these, edit `TIME_SLOTS` /

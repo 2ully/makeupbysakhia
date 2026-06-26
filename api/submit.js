@@ -17,7 +17,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { fname, lname, email, phone, service, date, time, message } = req.body || {};
+  const { fname, lname, email, phone, service, date, time, message, lang } = req.body || {};
+  const language = lang === 'ar' ? 'ar' : 'en';
 
   // Validation
   if (!fname || !lname || !email || !phone || !date || !time) {
@@ -63,6 +64,7 @@ export default async function handler(req, res) {
       time,
       status: 'pending',
       token,
+      lang: language,
     });
 
     if (insertError) {

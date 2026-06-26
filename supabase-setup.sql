@@ -16,7 +16,8 @@ create table if not exists public.bookings (
   time        text not null,
   status      text not null default 'pending'
                 check (status in ('pending', 'confirmed', 'declined')),
-  token       text not null
+  token       text not null,
+  lang        text not null default 'en'
 );
 
 -- A given date+time can only have ONE active (pending or confirmed) booking.

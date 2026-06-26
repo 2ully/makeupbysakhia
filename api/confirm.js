@@ -8,11 +8,15 @@ import {
 } from './_lib.js';
 
 // Reusable WhatsApp button + clickable number link for customer emails.
-const whatsappBlock = `
+function whatsappBlock(ar) {
+  const label = ar ? '💬 تواصلي عبر واتساب' : '💬 Chat on WhatsApp';
+  const orMessage = ar ? 'أو راسليني على' : 'or message';
+  return `
   <p style="text-align:center;margin:24px 0 8px;">
-    <a href="${WHATSAPP_URL}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-size:14px;">💬 Chat on WhatsApp</a>
+    <a href="${WHATSAPP_URL}" style="display:inline-block;background:#25D366;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-size:14px;">${label}</a>
   </p>
-  <p style="text-align:center;color:#9e7e6e;font-size:13px;margin:0;">or message <a href="${WHATSAPP_URL}" style="color:#5c3d2e;">${WHATSAPP_DISPLAY}</a></p>`;
+  <p style="text-align:center;color:#9e7e6e;font-size:13px;margin:0;">${orMessage} <a href="${WHATSAPP_URL}" style="color:#5c3d2e;">${WHATSAPP_DISPLAY}</a></p>`;
+}
 
 // GET /api/confirm?token=...&action=confirm|decline
 // Opened by the manager from the buttons in the notification email.
@@ -83,9 +87,33 @@ export default async function handler(req, res) {
   }
 }
 
+// Wrap email body in an RTL/Arabic-friendly container when needed.
+function emailWrap(ar, inner) {
+  const dir = ar ? 'rtl' : 'ltr';
+  const font = ar ? "'Tahoma','Segoe UI',Arial,sans-serif" : 'Georgia,serif';
+  return `<div dir="${dir}" style="font-family:${font};max-width:600px;margin:0 auto;padding:32px;background:#fdf8f5;border:1px solid #e8ddd5;">${inner}</div>`;
+}
+
 async function sendCustomerEmail(b) {
-  const html = `
-    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:32px;background:#fdf8f5;border:1px solid #e8ddd5;">
+  const ar = b.lang === 'ar';
+  const inner = ar
+    ? `
+      <h2 style="color:#5c3d2e;font-size:24px;margin-bottom:4px;">✦ تم تأكيد حجزكِ</h2>
+      <p style="color:#9e7e6e;font-size:13px;margin-top:0;">Makeup by Sakhia</p>
+      <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
+      <p style="color:#3a2820;font-size:15px;">مرحباً ${escapeHtml(b.fname)}،</p>
+      <p style="color:#3a2820;font-size:15px;">خبر سعيد — تم تأكيد جلسة المكياج الخاصة بكِ! إليكِ التفاصيل:</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+        <tr><td style="padding:8px 0;color:#9e7e6e;font-size:13px;width:120px;">💄 الخدمة</td><td style="padding:8px 0;color:#3a2820;font-size:14px;">${escapeHtml(b.service) || 'جلسة مكياج'}</td></tr>
+        <tr><td style="padding:8px 0;color:#9e7e6e;font-size:13px;">📅 التاريخ</td><td style="padding:8px 0;color:#3a2820;font-size:14px;">${escapeHtml(b.date)}</td></tr>
+        <tr><td style="padding:8px 0;color:#9e7e6e;font-size:13px;">🕐 الوقت</td><td style="padding:8px 0;color:#3a2820;font-size:14px;">${escapeHtml(b.time)}</td></tr>
+      </table>
+      <p style="color:#3a2820;font-size:15px;">إذا احتجتِ لتعديل الموعد أو لديكِ أي استفسار، يمكنكِ الرد على هذا البريد أو التواصل معي عبر واتساب:</p>
+      ${whatsappBlock(true)}
+      <p style="color:#3a2820;font-size:15px;text-align:center;margin-top:24px;">لا أطيق الانتظار لأجعلكِ تتألّقين ✨</p>
+      <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
+      <p style="color:#b3a49a;font-size:12px;text-align:center;">Makeup by Sakhia</p>`
+    : `
       <h2 style="color:#5c3d2e;font-size:24px;margin-bottom:4px;">✦ Your Booking is Confirmed</h2>
       <p style="color:#9e7e6e;font-size:13px;margin-top:0;">Makeup by Sakhia</p>
       <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
@@ -97,43 +125,56 @@ async function sendCustomerEmail(b) {
         <tr><td style="padding:8px 0;color:#9e7e6e;font-size:13px;">🕐 Time</td><td style="padding:8px 0;color:#3a2820;font-size:14px;">${escapeHtml(b.time)}</td></tr>
       </table>
       <p style="color:#3a2820;font-size:15px;">If you need to reschedule or have any questions, just reply to this email or reach me on WhatsApp:</p>
-      ${whatsappBlock}
+      ${whatsappBlock(false)}
       <p style="color:#3a2820;font-size:15px;text-align:center;margin-top:24px;">Can't wait to make you glow ✨</p>
       <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
-      <p style="color:#b3a49a;font-size:12px;text-align:center;">Makeup by Sakhia</p>
-    </div>`;
+      <p style="color:#b3a49a;font-size:12px;text-align:center;">Makeup by Sakhia</p>`;
 
   await getMailer().sendMail({
     from: `Makeup by Sakhia <${process.env.GMAIL_USER}>`,
     to: b.email,
-    subject: `Your booking is confirmed — ${b.date} at ${b.time}`,
-    html,
+    subject: ar ? `تم تأكيد حجزكِ — ${b.date} الساعة ${b.time}` : `Your booking is confirmed — ${b.date} at ${b.time}`,
+    html: emailWrap(ar, inner),
   });
 }
 
 async function sendDeclineEmail(b) {
-  const html = `
-    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:32px;background:#fdf8f5;border:1px solid #e8ddd5;">
+  const ar = b.lang === 'ar';
+  const bookBtn = ar
+    ? `<a href="${SITE_URL}/#booking" style="display:inline-block;background:#5c3d2e;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-size:14px;">📅 احجزي موعداً آخر</a>`
+    : `<a href="${SITE_URL}/#booking" style="display:inline-block;background:#5c3d2e;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-size:14px;">📅 Book Another Time</a>`;
+
+  const inner = ar
+    ? `
+      <h2 style="color:#5c3d2e;font-size:24px;margin-bottom:4px;">بخصوص طلب حجزكِ</h2>
+      <p style="color:#9e7e6e;font-size:13px;margin-top:0;">Makeup by Sakhia</p>
+      <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
+      <p style="color:#3a2820;font-size:15px;">مرحباً ${escapeHtml(b.fname)}،</p>
+      <p style="color:#3a2820;font-size:15px;">شكراً جزيلاً لاهتمامكِ! للأسف لا يمكنني استقبال الموعد المطلوب يوم <strong>${escapeHtml(b.date)}</strong> الساعة <strong>${escapeHtml(b.time)}</strong>.</p>
+      <p style="color:#3a2820;font-size:15px;">لا تيأسي — يسعدني أن نجد وقتاً مناسباً لكِ. يمكنكِ اختيار تاريخ أو وقت آخر من موقعي، أو مراسلتي عبر واتساب وسنرتّب الأمر معاً.</p>
+      <p style="text-align:center;margin:24px 0 8px;">${bookBtn}</p>
+      ${whatsappBlock(true)}
+      <p style="color:#3a2820;font-size:15px;text-align:center;margin-top:24px;">أتطلّع لرؤيتكِ قريباً ✨</p>
+      <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
+      <p style="color:#b3a49a;font-size:12px;text-align:center;">Makeup by Sakhia</p>`
+    : `
       <h2 style="color:#5c3d2e;font-size:24px;margin-bottom:4px;">About Your Booking Request</h2>
       <p style="color:#9e7e6e;font-size:13px;margin-top:0;">Makeup by Sakhia</p>
       <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
       <p style="color:#3a2820;font-size:15px;">Hi ${escapeHtml(b.fname)},</p>
       <p style="color:#3a2820;font-size:15px;">Thank you so much for your interest! Unfortunately I'm not able to take your requested slot on <strong>${escapeHtml(b.date)}</strong> at <strong>${escapeHtml(b.time)}</strong>.</p>
       <p style="color:#3a2820;font-size:15px;">Please don't be discouraged — I'd love to find a time that works. You can pick another date or time on my website, or just message me on WhatsApp and we'll sort it out together.</p>
-      <p style="text-align:center;margin:24px 0 8px;">
-        <a href="${SITE_URL}/#booking" style="display:inline-block;background:#5c3d2e;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-size:14px;">📅 Book Another Time</a>
-      </p>
-      ${whatsappBlock}
+      <p style="text-align:center;margin:24px 0 8px;">${bookBtn}</p>
+      ${whatsappBlock(false)}
       <p style="color:#3a2820;font-size:15px;text-align:center;margin-top:24px;">Hope to see you soon ✨</p>
       <hr style="border:none;border-top:1px solid #e8ddd5;margin:24px 0;" />
-      <p style="color:#b3a49a;font-size:12px;text-align:center;">Makeup by Sakhia</p>
-    </div>`;
+      <p style="color:#b3a49a;font-size:12px;text-align:center;">Makeup by Sakhia</p>`;
 
   await getMailer().sendMail({
     from: `Makeup by Sakhia <${process.env.GMAIL_USER}>`,
     to: b.email,
-    subject: `Update on your booking request — ${b.date}`,
-    html,
+    subject: ar ? `تحديث بخصوص طلب حجزكِ — ${b.date}` : `Update on your booking request — ${b.date}`,
+    html: emailWrap(ar, inner),
   });
 }
 
