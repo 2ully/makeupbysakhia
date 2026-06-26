@@ -1,3 +1,7 @@
+// Vercel Web Analytics
+import { inject } from '@vercel/analytics';
+inject();
+
 // Mobile nav — toggle both left and right lists
 function toggleMenu() {
   document.getElementById('nav-links').classList.toggle('open');

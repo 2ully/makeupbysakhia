@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
+    "@vercel/analytics": "^2.0.1",
     "nodemailer": "^6.9.14"
   }
 }
