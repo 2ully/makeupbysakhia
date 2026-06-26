@@ -229,17 +229,21 @@ function toggleLang() {
   setLang(lang);
 })();
 
-// Mobile nav — toggle both left and right lists
+// Mobile nav — open/close the dropdown menu (class on <nav>)
 function toggleMenu() {
-  document.getElementById('nav-links').classList.toggle('open');
-  var right = document.getElementById('nav-links-right');
-  if (right) right.classList.toggle('open');
+  document.querySelector('nav').classList.toggle('menu-open');
 }
 function closeMenu() {
-  document.getElementById('nav-links').classList.remove('open');
-  var right = document.getElementById('nav-links-right');
-  if (right) right.classList.remove('open');
+  document.querySelector('nav').classList.remove('menu-open');
 }
+
+// Close the dropdown when clicking/tapping anywhere outside the nav.
+document.addEventListener('click', function (e) {
+  var nav = document.querySelector('nav');
+  if (nav.classList.contains('menu-open') && !nav.contains(e.target)) {
+    closeMenu();
+  }
+});
 
 // Gallery filter (btn may be null when called from explore cards)
 function filterGallery(cat, btn) {

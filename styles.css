@@ -1048,26 +1048,6 @@ footer>.footer-inner>div>p {
 }
 
 @media (max-width: 640px) {
-  nav ul.open {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--warm-white);
-    align-items: center;
-    justify-content: center;
-    z-index: 99;
-    list-style: none;
-  }
-
-  nav ul.open a {
-    font-size: 1rem;
-  }
-
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -1123,15 +1103,89 @@ footer>.footer-inner>div>p {
 }
 
 @media (max-width: 960px) {
+  /* Single row: menu on the left, logo centered, language on the right.
+     Forced LTR so the buttons keep their sides even when the page is Arabic/RTL. */
   nav {
-    grid-template-columns: 1fr auto auto;
-    column-gap: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    direction: ltr;
+  }
+
+  .hamburger {
+    order: 1;
+  }
+
+  .logo {
+    order: 2;
   }
 
   .nav-lang-mobile {
     display: inline-flex;
     align-items: center;
-    justify-self: end;
+    order: 3;
+  }
+
+  /* The in-list language toggle is redundant on mobile (the bar has one). */
+  .lang-li {
+    display: none;
+  }
+
+  /* ── COMPACT DROPDOWN MENU ── */
+  /* The bar stays put; tapping ☰ drops the links in rows just below it. */
+  nav.menu-open {
+    flex-wrap: wrap;
+    row-gap: 20px;
+    padding-bottom: 22px;
+    box-shadow: 0 12px 20px rgba(44, 34, 24, 0.06);
+  }
+
+  nav.menu-open .nav-left,
+  nav.menu-open .nav-right {
+    display: flex;
+    flex-basis: 100%;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin: 0;
+    animation: menuDrop 0.28s ease both;
+  }
+
+  nav.menu-open .nav-left {
+    order: 4;
+  }
+
+  nav.menu-open .nav-right {
+    order: 5;
+    animation-delay: 0.06s;
+  }
+
+  nav.menu-open a {
+    font-size: 0.95rem;
+  }
+
+  /* Morph the ☰ into an ✕ while the menu is open. */
+  nav.menu-open .hamburger span:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+  }
+
+  nav.menu-open .hamburger span:nth-child(2) {
+    opacity: 0;
+  }
+
+  nav.menu-open .hamburger span:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+  }
+}
+
+@keyframes menuDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
