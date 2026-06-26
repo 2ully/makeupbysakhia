@@ -65,6 +65,64 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
+// ── Booking availability ──
+// Stop users picking past dates (min = today, in the visitor's local time).
+(function setDateMin() {
+  var dateInput = document.getElementById('date');
+  if (!dateInput) return;
+  var t = new Date();
+  var iso = t.getFullYear() + '-' +
+    String(t.getMonth() + 1).padStart(2, '0') + '-' +
+    String(t.getDate()).padStart(2, '0');
+  dateInput.min = iso;
+})();
+
+// When a date is chosen, ask the server which time slots are still open and
+// grey out the taken ones. Disables the submit button if the day is full.
+function loadAvailability() {
+  var date = document.getElementById('date').value;
+  var note = document.getElementById('availability-note');
+  var timeSelect = document.getElementById('time');
+  var submitBtn = document.querySelector('#booking-form button[type="submit"]');
+  if (!date) return;
+
+  note.className = 'availability-note';
+  note.textContent = 'Checking availability…';
+
+  fetch('/api/availability?date=' + encodeURIComponent(date))
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var taken = data.taken || [];
+
+      // Reset + re-enable every time option, then disable the taken ones.
+      Array.prototype.forEach.call(timeSelect.options, function (opt) {
+        if (!opt.value) return; // skip the "Select a time" placeholder
+        var isTaken = taken.indexOf(opt.value) !== -1;
+        opt.disabled = isTaken;
+        opt.textContent = opt.value + (isTaken ? ' — booked' : '');
+        if (isTaken && timeSelect.value === opt.value) timeSelect.value = '';
+      });
+
+      if (data.full) {
+        note.className = 'availability-note full';
+        note.textContent = '✕ Fully booked on this date — please choose another day.';
+        timeSelect.value = '';
+        timeSelect.disabled = true;
+        if (submitBtn) submitBtn.disabled = true;
+      } else {
+        note.className = 'availability-note open';
+        note.textContent = '✓ ' + data.remaining + ' session' +
+          (data.remaining === 1 ? '' : 's') + ' left on this date.';
+        timeSelect.disabled = false;
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    })
+    .catch(function () {
+      note.className = 'availability-note';
+      note.textContent = "Couldn't check availability — you can still submit and we'll confirm.";
+    });
+}
+
 // Booking form
 function submitForm(e) {
   e.preventDefault();
@@ -77,6 +135,7 @@ function submitForm(e) {
   const data = {
     fname: form.fname.value,
     lname: form.lname.value,
+    email: form.email.value,
     phone: form.phone.value,
     service: form.service.value,
     date: form.date.value,
@@ -89,16 +148,24 @@ function submitForm(e) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-    .then(function (res) { return res.json(); })
+    .then(function (res) {
+      return res.json().then(function (body) { return { ok: res.ok, body: body }; });
+    })
     .then(function (result) {
-      if (result.success) {
+      if (result.ok && result.body.success) {
         form.style.display = 'none';
         document.getElementById('form-success').style.display = 'block';
-      } else {
-        alert('Something went wrong. Please try again.');
-        btn.textContent = 'Send Booking Request ✦';
-        btn.disabled = false;
+        return;
       }
+      // Slot taken or day full between page load and submit — refresh availability.
+      if (result.body && (result.body.error === 'slot_taken' || result.body.error === 'full')) {
+        alert(result.body.message || 'That time is no longer available. Please pick another.');
+        loadAvailability();
+      } else {
+        alert((result.body && result.body.message) || 'Something went wrong. Please try again.');
+      }
+      btn.textContent = 'Send Booking Request ✦';
+      btn.disabled = false;
     })
     .catch(function () {
       alert('Network error. Please check your connection and try again.');

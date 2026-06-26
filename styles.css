@@ -829,6 +829,21 @@ textarea {
   font-size: 0.8rem;
 }
 
+.availability-note {
+  font-size: 0.82rem;
+  margin: -10px 0 18px;
+  min-height: 1.2em;
+  color: var(--brown-mid);
+}
+
+.availability-note.full {
+  color: #b5503f;
+}
+
+.availability-note.open {
+  color: #6f8f5f;
+}
+
 .form-success {
   display: none;
   text-align: center;
