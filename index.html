@@ -59,18 +59,18 @@
     <h2 data-i18n="explore.title">Explore by Category</h2>
     <div class="explore-grid">
       <div class="explore-card"
-        onclick="filterGallery('bridal', null); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
-        <div class="explore-card-bg bridal"></div>
+        onclick="filterGallery('glam'); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+        <div class="explore-card-bg glam"></div>
         <div class="explore-card-overlay">
-          <h3 data-i18n="explore.bridal">Bridal Looks</h3>
+          <h3 data-i18n="explore.glam">Glam &amp; Special Events</h3>
           <a class="explore-more" href="#gallery" data-i18n="explore.more">Explore More</a>
         </div>
       </div>
       <div class="explore-card"
-        onclick="filterGallery('glam', null); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
-        <div class="explore-card-bg glam"></div>
+        onclick="filterGallery('editorial'); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">
+        <div class="explore-card-bg editorial"></div>
         <div class="explore-card-overlay">
-          <h3 data-i18n="explore.glam">Glam &amp; Events</h3>
+          <h3 data-i18n="explore.editorial">Editorial &amp; Graduation</h3>
           <a class="explore-more" href="#gallery" data-i18n="explore.more">Explore More</a>
         </div>
       </div>
@@ -105,53 +105,49 @@
   <section id="gallery">
     <p class="section-label" data-i18n="gallery.label">Portfolio</p>
     <h2 data-i18n="gallery.title">Gallery</h2>
-    <p class="section-sub" data-i18n="gallery.sub">A glimpse into recent work — hover to explore, click to expand.</p>
+    <p class="section-sub" data-i18n="gallery.sub">A glimpse into recent work — swipe to explore, tap to expand.</p>
     <div class="gallery-filter">
-      <button class="filter-btn active" onclick="filterGallery('all', this)" data-i18n="gallery.all">All</button>
-      <button class="filter-btn" onclick="filterGallery('bridal', this)" data-i18n="gallery.bridal">Bridal</button>
-      <button class="filter-btn" onclick="filterGallery('glam', this)" data-i18n="gallery.glam">Glam</button>
-      <button class="filter-btn" onclick="filterGallery('editorial', this)" data-i18n="gallery.editorial">Editorial</button>
+      <button class="filter-btn active" data-cat="all" onclick="filterGallery('all')" data-i18n="gallery.all">All</button>
+      <button class="filter-btn" data-cat="glam" onclick="filterGallery('glam')" data-i18n="filter.glam">Glam &amp; Special Events</button>
+      <button class="filter-btn" data-cat="editorial" onclick="filterGallery('editorial')" data-i18n="filter.editorial">Editorial &amp; Graduation</button>
     </div>
-    <div class="gallery-grid" id="gallery-grid">
-      <div class="gallery-item bridal" data-category="bridal" data-title="Romantic Bridal" data-sub="Soft glam · 2025"
-        onclick="openLightbox(this)">
-        <img src="images/IMG_2744 - Copy.png" alt="Romantic Bridal">
-        <div class="gallery-overlay">
-          <h4 data-i18n="g1.title">Romantic Bridal</h4><span data-i18n="g1.sub">Soft glam · 2025</span>
-        </div>
-      </div>
-      <div class="gallery-item glam" data-category="glam" data-title="Golden Hour Glam" data-sub="Evening gala · 2025"
-        onclick="openLightbox(this)">
+    <div class="gallery-carousel">
+      <button class="carousel-arrow prev" onclick="galleryPrev()" aria-label="Previous">‹</button>
+      <div class="gallery-grid" id="gallery-grid">
+        <!-- GLAM & SPECIAL EVENTS -->
+      <div class="gallery-item glam" data-category="glam" onclick="openLightbox(this)">
         <img src="images/2.jpg" alt="Golden Hour Glam">
-        <div class="gallery-overlay">
-          <h4 data-i18n="g2.title">Golden Hour Glam</h4><span data-i18n="g2.sub">Evening gala · 2025</span>
+      </div>
+      <div class="gallery-item glam placeholder" data-category="glam">
+        <div class="gallery-placeholder">
+          <span class="ph-icon">✦</span>
+          <span class="ph-text" data-i18n="gallery.soon">Coming Soon</span>
         </div>
       </div>
-      <div class="gallery-item editorial" data-category="editorial" data-title="Dark Fantasy"
-        data-sub="Fashion editorial · 2024" onclick="openLightbox(this)">
-        <div class="gallery-overlay">
-          <h4 data-i18n="g3.title">Dark Fantasy</h4><span data-i18n="g3.sub">Fashion editorial · 2024</span>
+      <div class="gallery-item glam placeholder" data-category="glam">
+        <div class="gallery-placeholder">
+          <span class="ph-icon">✦</span>
+          <span class="ph-text" data-i18n="gallery.soon">Coming Soon</span>
         </div>
       </div>
-      <div class="gallery-item bridal" data-category="bridal" data-title="Classic Bride" data-sub="Wedding · 2024"
-        onclick="openLightbox(this)">
-        <div class="gallery-overlay">
-          <h4 data-i18n="g4.title">Classic Bride</h4><span data-i18n="g4.sub">Wedding · 2024</span>
+      <!-- EDITORIAL & GRADUATION -->
+      <div class="gallery-item editorial" data-category="editorial" onclick="openLightbox(this)">
+        <img src="images/IMG_2744 - Copy.png" alt="Editorial &amp; Graduation">
+      </div>
+      <div class="gallery-item editorial placeholder" data-category="editorial">
+        <div class="gallery-placeholder">
+          <span class="ph-icon">✦</span>
+          <span class="ph-text" data-i18n="gallery.soon">Coming Soon</span>
         </div>
       </div>
-      <div class="gallery-item glam" data-category="glam" data-title="Smoky Glam" data-sub="Birthday shoot · 2025"
-        onclick="openLightbox(this)">
-        <div class="gallery-overlay">
-          <h4 data-i18n="g5.title">Smoky Glam</h4><span data-i18n="g5.sub">Birthday shoot · 2025</span>
+      <div class="gallery-item editorial placeholder" data-category="editorial">
+        <div class="gallery-placeholder">
+          <span class="ph-icon">✦</span>
+          <span class="ph-text" data-i18n="gallery.soon">Coming Soon</span>
         </div>
       </div>
-      <div class="gallery-item editorial" data-category="editorial" data-title="Avant-Garde"
-        data-sub="Magazine shoot · 2024" onclick="openLightbox(this)">
-        <div class="gallery-overlay">
-          <h4 data-i18n="g6.title">Avant-Garde</h4><span data-i18n="g6.sub">Magazine shoot · 2024</span>
-        </div>
       </div>
-
+      <button class="carousel-arrow next" onclick="galleryNext()" aria-label="Next">›</button>
     </div>
   </section>
 

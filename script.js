@@ -19,7 +19,8 @@ var TRANSLATIONS = {
     'explore.label': 'Browse My Work',
     'explore.title': 'Explore by Category',
     'explore.bridal': 'Bridal Looks',
-    'explore.glam': 'Glam & Events',
+    'explore.glam': 'Glam & Special Events',
+    'explore.editorial': 'Editorial & Graduation',
     'explore.more': 'Explore More',
 
     'services.label': 'What I Offer',
@@ -40,6 +41,9 @@ var TRANSLATIONS = {
     'gallery.bridal': 'Bridal',
     'gallery.glam': 'Glam',
     'gallery.editorial': 'Editorial',
+    'filter.glam': 'Glam & Special Events',
+    'filter.editorial': 'Editorial & Graduation',
+    'gallery.soon': 'Coming Soon',
 
     'g1.title': 'Romantic Bridal', 'g1.sub': 'Soft glam · 2025',
     'g2.title': 'Golden Hour Glam', 'g2.sub': 'Evening gala · 2025',
@@ -105,7 +109,8 @@ var TRANSLATIONS = {
     'explore.label': 'تصفّحي أعمالي',
     'explore.title': 'استكشفي حسب الفئة',
     'explore.bridal': 'إطلالات العرائس',
-    'explore.glam': 'الجلام والمناسبات',
+    'explore.glam': 'الجلام والمناسبات الخاصة',
+    'explore.editorial': 'التصوير والتخرّج',
     'explore.more': 'اكتشفي المزيد',
 
     'services.label': 'ما أُقدّمه',
@@ -126,6 +131,9 @@ var TRANSLATIONS = {
     'gallery.bridal': 'عرائس',
     'gallery.glam': 'جلام',
     'gallery.editorial': 'تصوير فنّي',
+    'filter.glam': 'الجلام والمناسبات الخاصة',
+    'filter.editorial': 'التصوير والتخرّج',
+    'gallery.soon': 'قريباً',
 
     'g1.title': 'عروس رومانسية', 'g1.sub': 'جلام ناعم · ٢٠٢٥',
     'g2.title': 'جلام الساعة الذهبية', 'g2.sub': 'حفل مسائي · ٢٠٢٥',
@@ -245,15 +253,109 @@ document.addEventListener('click', function (e) {
   }
 });
 
-// Gallery filter (btn may be null when called from explore cards)
-function filterGallery(cat, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  document.querySelectorAll('.gallery-item').forEach(item => {
-    const match = cat === 'all' || item.dataset.category === cat;
-    item.style.display = match ? 'block' : 'none';
+// ── Gallery carousel (filter + seamless one-way autoplay + arrows) ──
+var galleryStep = 0;       // center-to-center distance between cards (px)
+var gallerySetWidth = 0;   // width of one full set of visible cards (px)
+var galleryTimer = null;
+
+// Show the chosen category (or all), then append a duplicate set of the
+// visible cards so the strip can loop rightward forever with no jump back.
+function galleryBuild(cat) {
+  var grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+
+  // Drop any clones from a previous build.
+  Array.prototype.forEach.call(grid.querySelectorAll('.gallery-clone'), function (c) { c.remove(); });
+
+  var originals = Array.prototype.filter.call(
+    grid.querySelectorAll('.gallery-item'),
+    function (it) { return !it.classList.contains('gallery-clone'); }
+  );
+  originals.forEach(function (it) {
+    it.style.display = (cat === 'all' || it.dataset.category === cat) ? '' : 'none';
+  });
+
+  var visible = originals.filter(function (it) { return it.style.display !== 'none'; });
+  visible.forEach(function (it) {
+    var clone = it.cloneNode(true);
+    clone.classList.add('gallery-clone');
+    grid.appendChild(clone);
+  });
+
+  grid.scrollLeft = 0;
+  // Measure once the new layout has settled.
+  requestAnimationFrame(function () {
+    if (visible.length >= 2) {
+      galleryStep = visible[1].getBoundingClientRect().left - visible[0].getBoundingClientRect().left;
+    } else if (visible.length === 1) {
+      galleryStep = visible[0].getBoundingClientRect().width + 16;
+    } else {
+      galleryStep = 0;
+    }
+    gallerySetWidth = galleryStep * visible.length;
   });
 }
+
+// After any scroll settles, fold the position back into the first set — the
+// duplicate set makes this instant shift invisible.
+function galleryNormalize() {
+  var grid = document.getElementById('gallery-grid');
+  if (!grid || !gallerySetWidth) return;
+  if (grid.scrollLeft >= gallerySetWidth - 1) {
+    grid.scrollLeft -= gallerySetWidth;
+  } else if (grid.scrollLeft < 0) {
+    grid.scrollLeft += gallerySetWidth;
+  }
+}
+
+function galleryShift(dir) {
+  var grid = document.getElementById('gallery-grid');
+  if (!grid || !galleryStep) return;
+  // Going back from the very start: hop into the duplicate first (seamless).
+  if (dir < 0 && grid.scrollLeft < galleryStep * 0.5) {
+    grid.scrollLeft += gallerySetWidth;
+  }
+  grid.scrollBy({ left: dir * galleryStep, behavior: 'smooth' });
+}
+
+function galleryAuto() {
+  if (galleryTimer) clearInterval(galleryTimer);
+  galleryTimer = setInterval(function () { galleryShift(1); }, 4000);
+}
+
+// Arrows also reset the timer so it doesn't tick right after a tap.
+function galleryNext() { galleryShift(1); galleryAuto(); }
+function galleryPrev() { galleryShift(-1); galleryAuto(); }
+
+// Gallery filter — show a category (or all) and (re)start the loop.
+function filterGallery(cat) {
+  document.querySelectorAll('.filter-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.cat === cat);
+  });
+  galleryBuild(cat);
+  galleryAuto();
+}
+
+// Default to All on load.
+filterGallery('all');
+
+// Pause autoplay on hover (desktop); fold the loop after any scroll settles.
+(function () {
+  var grid = document.getElementById('gallery-grid');
+  var carousel = document.querySelector('.gallery-carousel');
+  if (!grid) return;
+  if (carousel) {
+    carousel.addEventListener('mouseenter', function () {
+      if (galleryTimer) { clearInterval(galleryTimer); galleryTimer = null; }
+    });
+    carousel.addEventListener('mouseleave', galleryAuto);
+  }
+  var debounce;
+  grid.addEventListener('scroll', function () {
+    clearTimeout(debounce);
+    debounce = setTimeout(galleryNormalize, 150);
+  });
+})();
 
 // Lightbox
 function openLightbox(el) {
