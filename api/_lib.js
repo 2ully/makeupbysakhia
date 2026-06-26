@@ -17,6 +17,11 @@ export const TIME_SLOTS = [
 // Maximum number of sessions (active bookings) allowed per day.
 export const MAX_PER_DAY = 4;
 
+// Business contact details used in customer emails.
+export const WHATSAPP_URL = 'https://wa.me/96890653614';
+export const WHATSAPP_DISPLAY = '+968 90653614';
+export const SITE_URL = 'https://makeupbysakhia.vercel.app';
+
 // Supabase client using the service-role key — server-side only, never shipped
 // to the browser. Created lazily so a missing env var fails loudly per-request.
 let _supabase;
