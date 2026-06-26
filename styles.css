@@ -823,6 +823,18 @@ textarea {
   min-height: 120px;
 }
 
+/* iOS Safari gives date inputs native sizing that ignores width and looks
+   shorter/narrower than the others — strip it so it inherits the same box. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
 .form-submit {
   width: 100%;
   padding: 16px;
