@@ -5,6 +5,7 @@ import {
   getSupabase,
   getMailer,
   getActiveBookingsForDate,
+  getBlocksForDate,
   escapeHtml,
   baseUrlFromRequest,
 } from './_lib.js';
@@ -43,7 +44,16 @@ export default async function handler(req, res) {
     const supabase = getSupabase();
 
     // Server-side availability re-check (never trust the browser).
-    const active = await getActiveBookingsForDate(date);
+    const [active, blocks] = await Promise.all([
+      getActiveBookingsForDate(date),
+      getBlocksForDate(date),
+    ]);
+    if (blocks.wholeDay) {
+      return res.status(409).json({ error: 'full', message: 'That day is not available.' });
+    }
+    if (blocks.times.indexOf(time) !== -1) {
+      return res.status(409).json({ error: 'slot_taken', message: 'That time is not available. Please pick another.' });
+    }
     if (active.length >= MAX_PER_DAY) {
       return res.status(409).json({ error: 'full', message: 'That day is fully booked.' });
     }

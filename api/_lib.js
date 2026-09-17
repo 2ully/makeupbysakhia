@@ -1,6 +1,7 @@
 // Shared helpers for the booking API. Files prefixed with "_" are NOT exposed
 // as routes by Vercel, so this is import-only.
 
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 
@@ -84,4 +85,118 @@ export async function getActiveBookingsForDate(date) {
     .in('status', ['pending', 'confirmed']);
   if (error) throw error;
   return data || [];
+}
+
+// Days/slots the owner closed from /admin. A row with time = null closes the
+// whole day. Returns { wholeDay: bool, times: [] }.
+export async function getBlocksForDate(date) {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('blocked_slots')
+    .select('time')
+    .eq('date', date);
+  if (error) throw error;
+  const rows = data || [];
+  return {
+    wholeDay: rows.some((r) => !r.time),
+    times: rows.filter((r) => r.time).map((r) => r.time),
+  };
+}
+
+// The gallery images shown on the home page, in display order.
+export async function getGallery() {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('gallery')
+    .select('id, url, category, title, sort_order')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+// ── Admin authentication ──
+// One shared password (ADMIN_PASSWORD). After signing in, the browser holds a
+// signed cookie instead of the password itself. The signing key is derived from
+// the password, so changing the password signs everyone out.
+
+const SESSION_COOKIE = 'admin_session';
+const SESSION_DAYS = 30;
+
+function signingKey() {
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) throw new Error('Missing ADMIN_PASSWORD');
+  return crypto.createHash('sha256').update('makeupbysakhia:' + password).digest();
+}
+
+// Compare two strings without leaking how much of them matched.
+function safeEqual(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+export function checkPassword(candidate) {
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password) throw new Error('Missing ADMIN_PASSWORD');
+  return safeEqual(candidate || '', password);
+}
+
+// Token is "<expiry>.<signature of expiry>".
+function makeToken() {
+  const expires = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
+  const sig = crypto.createHmac('sha256', signingKey()).update(String(expires)).digest('hex');
+  return `${expires}.${sig}`;
+}
+
+function tokenIsValid(token) {
+  if (!token || token.indexOf('.') === -1) return false;
+  const [expires, sig] = token.split('.');
+  if (!/^\d+$/.test(expires) || Number(expires) < Date.now()) return false;
+  const expected = crypto.createHmac('sha256', signingKey()).update(expires).digest('hex');
+  return safeEqual(sig, expected);
+}
+
+function readCookie(req, name) {
+  const header = req.headers.cookie || '';
+  const match = header.split(';').map((c) => c.trim()).find((c) => c.startsWith(name + '='));
+  return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
+}
+
+export function setSessionCookie(res) {
+  const maxAge = SESSION_DAYS * 24 * 60 * 60;
+  res.setHeader(
+    'Set-Cookie',
+    `${SESSION_COOKIE}=${makeToken()}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`
+  );
+}
+
+export function clearSessionCookie(res) {
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`);
+}
+
+export function isAdmin(req) {
+  try {
+    return tokenIsValid(readCookie(req, SESSION_COOKIE));
+  } catch (err) {
+    return false; // ADMIN_PASSWORD not configured — nobody is an admin.
+  }
+}
+
+// Guard for the /api/admin routes. Returns false once it has answered the
+// request, so handlers can simply `if (!requireAdmin(req, res)) return;`.
+export function requireAdmin(req, res) {
+  if (isAdmin(req)) return true;
+  res.status(401).json({ error: 'unauthorized' });
+  return false;
+}
+
+// Read a JSON body whether or not the platform already parsed it.
+export async function readJsonBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  if (typeof req.body === 'string') {
+    try { return JSON.parse(req.body); } catch (err) { return {}; }
+  }
+  return {};
 }

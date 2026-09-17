@@ -338,8 +338,61 @@ function filterGallery(cat) {
   galleryAuto();
 }
 
-// Default to All on load.
+// Build one gallery card. `image` comes from /api/gallery (managed in /admin).
+function galleryCard(image) {
+  var item = document.createElement('div');
+  item.className = 'gallery-item ' + image.category;
+  item.dataset.category = image.category;
+  item.onclick = function () { openLightbox(item); };
+
+  var img = document.createElement('img');
+  img.src = image.url;
+  img.alt = image.title || '';
+  img.loading = 'lazy';
+  item.appendChild(img);
+  return item;
+}
+
+// A "Coming Soon" tile, so a thin category still fills the strip.
+function galleryPlaceholder(category) {
+  var item = document.createElement('div');
+  item.className = 'gallery-item ' + category + ' placeholder';
+  item.dataset.category = category;
+  item.innerHTML = '<div class="gallery-placeholder"><span class="ph-icon">✦</span>' +
+    '<span class="ph-text" data-i18n="gallery.soon">Coming Soon</span></div>';
+  return item;
+}
+
+// Load the images the owner manages in /admin. If that fails, the cards already
+// in index.html stay on screen, so the gallery is never empty.
+function loadGalleryImages() {
+  var grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+
+  fetch('/api/gallery')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var images = (data && data.images) || [];
+      if (!images.length) return;
+
+      grid.innerHTML = '';
+      images.forEach(function (image) { grid.appendChild(galleryCard(image)); });
+
+      // Keep each category at least three tiles wide, as the static page did.
+      ['glam', 'editorial'].forEach(function (cat) {
+        var count = images.filter(function (i) { return i.category === cat; }).length;
+        for (var i = count; i < 3; i++) grid.appendChild(galleryPlaceholder(cat));
+      });
+
+      applyTranslations();
+      filterGallery('all');
+    })
+    .catch(function () { /* keep whatever is already in the page */ });
+}
+
+// Show the built-in cards immediately, then swap in the managed ones.
 filterGallery('all');
+loadGalleryImages();
 
 // Pause autoplay on hover (desktop); fold the loop after any scroll settles.
 (function () {

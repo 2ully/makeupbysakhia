@@ -88,6 +88,32 @@ alter table public.bookings add column if not exists lang text not null default 
 
 (Fresh setups using the latest `supabase-setup.sql` already include this — no action needed.)
 
+## Owner dashboard (`/admin`)
+
+The dashboard at `https://makeupbysakhia.vercel.app/admin` shows every booking, lets you
+confirm/decline them, message customers on WhatsApp, add bookings you took by hand, close
+days you're away, and manage the home page gallery images.
+
+**Two one-time steps:**
+
+1. **Re-run `supabase-setup.sql`.** Supabase → SQL Editor → paste the whole file → Run.
+   It adds the `blocked_slots` and `gallery` tables. Running it again is safe; nothing
+   existing is deleted.
+2. **Add one environment variable in Vercel** (Settings → Environment Variables), then redeploy:
+
+   | Name             | Value                                        |
+   |------------------|----------------------------------------------|
+   | `ADMIN_PASSWORD` | the password for signing in to `/admin`      |
+
+   Pick something long. Anyone with this password can see customer details and change
+   bookings. Changing it later signs everyone out of the dashboard.
+
+Uploaded gallery photos are stored in Supabase Storage in a bucket called `gallery`, which
+is created automatically on the first upload. Photos are shrunk to 1600px in the browser
+before uploading, so phone photos don't waste storage. The two images that ship with the
+site (`images/…`) are listed in the gallery too and can be reordered, but deleting them
+only removes them from the page — the files stay in the repo.
+
 ## Notes
 - The old `RESEND_API_KEY` is no longer used — you can delete it from Vercel if you added it.
 - Times offered: 1–6 PM, max 4 bookings/day. To change these, edit `TIME_SLOTS` /
