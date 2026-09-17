@@ -108,6 +108,13 @@ days you're away, and manage the home page gallery images.
    Pick something long. Anyone with this password can see customer details and change
    bookings. Changing it later signs everyone out of the dashboard.
 
+**Confirming or declining opens WhatsApp** with a message to that customer already written,
+in both English and Arabic (their own language first). Press send in WhatsApp — the booking
+status is already saved either way.
+
+**Add it to your iPhone home screen:** open `/admin` in Safari → Share → *Add to Home
+Screen*. It gets the ✦ icon and opens full screen like an app.
+
 The Gallery tab also manages the **category cards** — the big tiles under “Explore by
 Category”, which are the same thing as the gallery filter buttons. You can add a card,
 rename it in English and Arabic, give it a photo, reorder it, or delete it. With no photo,

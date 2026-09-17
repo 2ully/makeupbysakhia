@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════
 
 var WHATSAPP_COUNTRY = '968'; // Oman, used when a phone number has no country code.
-var state = { scope: 'upcoming', images: [], categories: [], blocks: [] };
+var state = { scope: 'upcoming', bookings: [], images: [], categories: [], blocks: [] };
 
 // ── Small helpers ──
 function $(id) { return document.getElementById(id); }
@@ -123,6 +123,7 @@ function loadBookings(scope) {
 
   api('/api/admin/bookings?scope=' + encodeURIComponent(state.scope))
     .then(function (data) {
+      state.bookings = data.bookings;
       $('stat-pending').textContent = data.stats.pending;
       $('stat-upcoming').textContent = data.stats.upcoming;
       renderBookings(data.bookings);
@@ -146,15 +147,19 @@ function renderBookings(bookings) {
     if (b.phone) contact.push('<a href="tel:' + escapeHtml(b.phone) + '">' + escapeHtml(b.phone) + '</a>');
     if (b.email) contact.push('<a href="mailto:' + escapeHtml(b.email) + '">' + escapeHtml(b.email) + '</a>');
 
+    // Confirming or declining also opens WhatsApp with the message ready.
+    var sends = wa ? ' &amp; message' : '';
     var actions = [];
     if (b.status !== 'confirmed') {
-      actions.push('<button class="btn btn-small" onclick="setStatus(\'' + b.id + '\',\'confirmed\')">✓ Confirm</button>');
+      actions.push('<button class="btn btn-small" onclick="setStatus(\'' + b.id + '\',\'confirmed\')">✓ Confirm' + sends + '</button>');
     }
     if (b.status !== 'declined') {
-      actions.push('<button class="ghost-btn" onclick="setStatus(\'' + b.id + '\',\'declined\')">✕ Decline</button>');
+      actions.push('<button class="ghost-btn" onclick="setStatus(\'' + b.id + '\',\'declined\')">✕ Decline' + sends + '</button>');
     }
     if (wa) {
-      actions.push('<a class="wa-btn" target="_blank" rel="noopener" href="' + whatsappReply(b, wa) + '">💬 WhatsApp</a>');
+      var kind = b.status === 'pending' ? 'hello' : b.status;
+      actions.push('<a class="wa-btn" target="_blank" rel="noopener" href="' +
+        whatsappReply(b, wa, kind) + '">💬 Chat</a>');
     }
     actions.push('<button class="ghost-btn danger" onclick="deleteBooking(\'' + b.id + '\')">Delete</button>');
 
@@ -173,21 +178,59 @@ function renderBookings(bookings) {
   }).join('');
 }
 
-// Pre-written WhatsApp reply to the customer, in the language they booked in.
-function whatsappReply(b, number) {
-  var text = b.lang === 'ar'
-    ? 'مرحباً ' + (b.fname || '') + '، تم تأكيد حجزكِ يوم ' + b.date + ' الساعة ' + b.time + ' ✦'
-    : 'Hi ' + (b.fname || '') + ', your booking on ' + b.date + ' at ' + b.time + ' is confirmed ✦';
+// ── WhatsApp messages to the customer ──
+// Every message carries both languages, with the one the customer booked in
+// first, so it reads naturally whoever opens it.
+function messageParts(b, kind) {
+  var name = b.fname || '';
+  var when = prettyDate(b.date) + ' · ' + b.time;
+
+  var en, ar;
+  if (kind === 'confirmed') {
+    en = 'Hi ' + name + ' ✦\nYour booking is confirmed:\n📅 ' + when +
+      (b.service ? '\n💄 ' + b.service : '') +
+      '\n\n— Makeup by Sakhia';
+    ar = 'مرحباً ' + name + ' ✦\nتم تأكيد حجزكِ:\n📅 ' + when +
+      (b.service ? '\n💄 ' + b.service : '') +
+      '\n\n— Makeup by Sakhia';
+  } else if (kind === 'declined') {
+    en = 'Hi ' + name + ' ✦\nThank you so much for your booking request for ' + when +
+      ".\n\nI'm very sorry, I'm not able to take that time. I'd love to find another time that " +
+      'works for you — just reply here and we’ll arrange it.\n— Makeup by Sakhia';
+    ar = 'مرحباً ' + name + ' ✦\nشكراً جزيلاً على طلب حجزكِ ' + when +
+      '.\n\nأعتذر بشدّة، لا يمكنني استقبال هذا الموعد. يسعدني أن نجد وقتاً آخر يناسبكِ — ' +
+      'راسليني هنا وسنرتّب الأمر.\n— Makeup by Sakhia';
+  } else {
+    en = 'Hi ' + name + ' ✦ About your booking on ' + when + ':';
+    ar = 'مرحباً ' + name + ' ✦ بخصوص حجزكِ ' + when + ':';
+  }
+
+  return b.lang === 'ar' ? [ar, en] : [en, ar];
+}
+
+function whatsappReply(b, number, kind) {
+  var text = messageParts(b, kind || 'hello').join('\n\n———\n\n');
   return 'https://wa.me/' + number + '?text=' + encodeURIComponent(text);
 }
 
 function setStatus(id, status) {
+  var booking = state.bookings.filter(function (b) { return b.id === id; })[0];
+  var number = booking ? waNumber(booking.phone) : '';
+
+  // Open the tab now, inside the tap, or phone browsers block it as a pop-up.
+  // It is filled in once the server confirms the change.
+  var win = number ? window.open('', '_blank') : null;
+
   api('/api/admin/bookings', { method: 'PATCH', body: { id: id, status: status } })
     .then(function () {
       toast(status === 'confirmed' ? 'Booking confirmed' : 'Booking declined — the slot is open again');
+      if (win) win.location.href = whatsappReply(booking, number, status);
       loadBookings();
     })
-    .catch(function (err) { toast(err.message, true); });
+    .catch(function (err) {
+      if (win) win.close();
+      toast(err.message, true);
+    });
 }
 
 function deleteBooking(id) {
