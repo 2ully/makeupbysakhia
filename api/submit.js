@@ -76,8 +76,16 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Could not save booking' });
     }
 
-    // Notify the manager with Confirm / Decline buttons.
-    await sendManagerEmail(req, { fname, lname, email, phone, service, date, time, message, token });
+    // The customer sends the booking to us on WhatsApp, so this email is only a
+    // backup copy for the inbox. Never fail the booking over it — if the mail
+    // credentials are missing or rejected, log it and carry on.
+    if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+      try {
+        await sendManagerEmail(req, { fname, lname, email, phone, service, date, time, message, token });
+      } catch (mailError) {
+        console.error('Manager email failed (booking was still saved):', mailError);
+      }
+    }
 
     return res.status(200).json({ success: true });
   } catch (err) {

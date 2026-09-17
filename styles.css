@@ -1005,6 +1005,24 @@ input[type="date"]::-webkit-date-and-time-value {
   font-weight: 300;
 }
 
+/* Manual WhatsApp link, for the rare case the app did not open on its own. */
+.wa-fallback {
+  display: inline-block;
+  margin-top: 22px;
+  padding: 11px 26px;
+  background: #25d366;
+  color: var(--white);
+  text-decoration: none;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 400;
+  transition: opacity 0.2s ease;
+}
+
+.wa-fallback:hover {
+  opacity: 0.88;
+}
+
 /* ── FOOTER ── */
 footer {
   background: var(--brown-dark);

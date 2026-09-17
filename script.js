@@ -74,8 +74,9 @@ var TRANSLATIONS = {
     'opt.glam': 'Glam & Special Events',
     'opt.grad': 'Graduation Makeup',
     'form.submit': 'Send Booking Request ✦',
-    'success.title': 'Request Sent!',
-    'success.text': "Thank you! I'll be in touch within 24 hours to confirm your session details.",
+    'success.title': 'Almost done!',
+    'success.text': "WhatsApp should have opened with your booking details ready — just press send and I'll confirm your session shortly.",
+    'success.waHint': "WhatsApp didn't open? Tap here",
 
     'footer.desc': 'Professional makeup artistry for weddings, events, and editorial projects. Making you shine is my passion.',
     'footer.quick': 'Quick Links',
@@ -164,8 +165,9 @@ var TRANSLATIONS = {
     'opt.glam': 'الجلام والمناسبات الخاصة',
     'opt.grad': 'مكياج التخرّج',
     'form.submit': 'أرسلي طلب الحجز ✦',
-    'success.title': 'تم إرسال الطلب!',
-    'success.text': 'شكراً لكِ! سأتواصل معكِ خلال ٢٤ ساعة لتأكيد تفاصيل جلستكِ.',
+    'success.title': 'خطوة أخيرة!',
+    'success.text': 'تم فتح واتساب وتفاصيل حجزكِ جاهزة — فقط اضغطي إرسال وسأؤكّد لكِ الموعد قريباً.',
+    'success.waHint': 'لم يفتح واتساب؟ اضغطي هنا',
 
     'footer.desc': 'فنّ مكياج احترافي للأعراس والمناسبات والجلسات. تألّقكِ هو شغفي.',
     'footer.quick': 'روابط سريعة',
@@ -464,14 +466,42 @@ function loadAvailability() {
     });
 }
 
-// Booking form
+// ── Booking form → WhatsApp ──
+// The business WhatsApp number, digits only (country code + number).
+var WHATSAPP_NUMBER = '96890653614';
+
+// Compose the message the customer will send us, in their own language.
+function buildWhatsAppMessage(d) {
+  var L = currentLang === 'ar'
+    ? { hi: 'مرحباً سخية ✦', want: 'أرغب بحجز جلسة.', name: 'الاسم', service: 'الخدمة',
+        date: 'التاريخ', time: 'الوقت', phone: 'الهاتف', email: 'البريد', vision: 'الرؤية' }
+    : { hi: 'Hello Sakhia ✦', want: "I'd like to book a session.", name: 'Name', service: 'Service',
+        date: 'Date', time: 'Time', phone: 'Phone', email: 'Email', vision: 'Vision' };
+
+  var lines = [
+    L.hi,
+    L.want,
+    '',
+    L.name + ': ' + d.fname + ' ' + d.lname,
+    L.service + ': ' + d.service,
+    L.date + ': ' + d.date,
+    L.time + ': ' + d.time,
+    L.phone + ': ' + d.phone,
+    L.email + ': ' + d.email,
+  ];
+  if (d.message) lines.push(L.vision + ': ' + d.message);
+  return lines.join('\n');
+}
+
+function whatsappUrl(d) {
+  return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(buildWhatsAppMessage(d));
+}
+
 function submitForm(e) {
   e.preventDefault();
 
   const form = document.getElementById('booking-form');
   const btn = form.querySelector('button[type="submit"]');
-  btn.textContent = t('js.sending');
-  btn.disabled = true;
 
   const data = {
     fname: form.fname.value,
@@ -485,38 +515,52 @@ function submitForm(e) {
     lang: currentLang,
   };
 
+  // Open WhatsApp FIRST, while we are still inside the tap that triggered this.
+  // Waiting for the server would make phone browsers treat it as a pop-up and block it.
+  const waUrl = whatsappUrl(data);
+  const waWindow = window.open(waUrl, '_blank');
+
+  btn.textContent = t('js.sending');
+  btn.disabled = true;
+
+  // Show the success panel with a manual link, in case WhatsApp did not open.
+  const success = document.getElementById('form-success');
+  const fallback = document.getElementById('wa-fallback');
+  if (fallback) fallback.href = waUrl;
+  form.style.display = 'none';
+  success.style.display = 'block';
+
+  // Save the booking in the background so the slot is held and it shows up in
+  // the bookings list. keepalive lets the request finish even if the page is
+  // replaced by WhatsApp on mobile.
   fetch('/api/submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    keepalive: true,
   })
     .then(function (res) {
       return res.json().then(function (body) { return { ok: res.ok, body: body }; });
     })
     .then(function (result) {
-      if (result.ok && result.body.success) {
-        form.style.display = 'none';
-        document.getElementById('form-success').style.display = 'block';
-        return;
-      }
-      // Slot taken or day full between page load and submit — refresh availability.
-      if (result.body && result.body.error === 'slot_taken') {
-        alert(t('js.slotTaken'));
+      if (result.ok && result.body.success) return;
+      // Someone took the slot first — put the form back so they can pick again.
+      var code = result.body && result.body.error;
+      if (code === 'slot_taken' || code === 'full') {
+        success.style.display = 'none';
+        form.style.display = '';
+        btn.textContent = t('form.submit');
+        btn.disabled = false;
+        alert(t(code === 'full' ? 'js.dayFull' : 'js.slotTaken'));
         loadAvailability();
-      } else if (result.body && result.body.error === 'full') {
-        alert(t('js.dayFull'));
-        loadAvailability();
-      } else {
-        alert(t('js.genericError'));
       }
-      btn.textContent = t('form.submit');
-      btn.disabled = false;
+      // Any other failure: the WhatsApp message still reached us, so leave the
+      // success panel up rather than worrying the customer.
     })
-    .catch(function () {
-      alert(t('js.networkError'));
-      btn.textContent = t('form.submit');
-      btn.disabled = false;
-    });
+    .catch(function () { /* offline — the WhatsApp message is what matters */ });
+
+  // Nothing opened (pop-up blocked and no new tab): go to WhatsApp directly.
+  if (!waWindow) window.location.href = waUrl;
 }
 
 // Scroll reveal
