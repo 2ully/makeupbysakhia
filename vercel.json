@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/availability?date=2000-01-01",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}
