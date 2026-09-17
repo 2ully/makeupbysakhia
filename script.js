@@ -213,6 +213,7 @@ function setLang(lang) {
   try { localStorage.setItem('lang', lang); } catch (e) { /* ignore */ }
 
   applyTranslations();
+  updateCategoryLabels();
 
   // The toggle shows the OTHER language you can switch to.
   document.querySelectorAll('.lang-toggle').forEach(function (b) {
@@ -363,6 +364,94 @@ function galleryPlaceholder(category) {
   return item;
 }
 
+// ── Categories (the "Explore by Category" cards + gallery filter buttons) ──
+var SITE_CATEGORIES = [];
+
+function categoryTitle(c) {
+  return currentLang === 'ar' && c.title_ar ? c.title_ar : c.title_en;
+}
+
+// Category names come from the database, so they are not in TRANSLATIONS —
+// this re-labels them when the visitor switches language.
+function updateCategoryLabels() {
+  // Guarded: setLang() runs during start-up, before this list is declared.
+  (SITE_CATEGORIES || []).forEach(function (c) {
+    document.querySelectorAll('[data-cat-title="' + c.key + '"]').forEach(function (el) {
+      el.textContent = categoryTitle(c);
+    });
+  });
+}
+
+// Rebuild the two lists that are driven by categories. If the site has no
+// categories yet, whatever is already in index.html is left alone.
+function renderCategories(categories) {
+  if (!categories.length) return;
+  SITE_CATEGORIES = categories;
+
+  var grid = document.querySelector('.explore-grid');
+  if (grid) {
+    grid.innerHTML = '';
+    categories.forEach(function (c) {
+      var card = document.createElement('div');
+      card.className = 'explore-card';
+      card.onclick = function () {
+        filterGallery(c.key);
+        document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+      };
+
+      var bg = document.createElement('div');
+      bg.className = 'explore-card-bg ' + c.key;
+      if (c.cover_url) {
+        bg.style.backgroundImage = 'url("' + c.cover_url + '")';
+        bg.style.backgroundSize = 'cover';
+        bg.style.backgroundPosition = 'center';
+      }
+
+      var overlay = document.createElement('div');
+      overlay.className = 'explore-card-overlay';
+
+      var heading = document.createElement('h3');
+      heading.dataset.catTitle = c.key;
+      heading.textContent = categoryTitle(c);
+
+      var more = document.createElement('a');
+      more.className = 'explore-more';
+      more.href = '#gallery';
+      more.setAttribute('data-i18n', 'explore.more');
+      more.textContent = t('explore.more');
+
+      overlay.appendChild(heading);
+      overlay.appendChild(more);
+      card.appendChild(bg);
+      card.appendChild(overlay);
+      grid.appendChild(card);
+    });
+  }
+
+  var filter = document.querySelector('.gallery-filter');
+  if (filter) {
+    filter.innerHTML = '';
+
+    var all = document.createElement('button');
+    all.className = 'filter-btn active';
+    all.dataset.cat = 'all';
+    all.setAttribute('data-i18n', 'gallery.all');
+    all.textContent = t('gallery.all');
+    all.onclick = function () { filterGallery('all'); };
+    filter.appendChild(all);
+
+    categories.forEach(function (c) {
+      var btn = document.createElement('button');
+      btn.className = 'filter-btn';
+      btn.dataset.cat = c.key;
+      btn.dataset.catTitle = c.key;
+      btn.textContent = categoryTitle(c);
+      btn.onclick = function () { filterGallery(c.key); };
+      filter.appendChild(btn);
+    });
+  }
+}
+
 // Load the images the owner manages in /admin. If that fails, the cards already
 // in index.html stay on screen, so the gallery is never empty.
 function loadGalleryImages() {
@@ -372,6 +461,9 @@ function loadGalleryImages() {
   fetch('/api/gallery')
     .then(function (res) { return res.json(); })
     .then(function (data) {
+      var categories = (data && data.categories) || [];
+      renderCategories(categories);
+
       var images = (data && data.images) || [];
       if (!images.length) return;
 
@@ -379,9 +471,9 @@ function loadGalleryImages() {
       images.forEach(function (image) { grid.appendChild(galleryCard(image)); });
 
       // Keep each category at least three tiles wide, as the static page did.
-      ['glam', 'editorial'].forEach(function (cat) {
-        var count = images.filter(function (i) { return i.category === cat; }).length;
-        for (var i = count; i < 3; i++) grid.appendChild(galleryPlaceholder(cat));
+      categories.forEach(function (c) {
+        var count = images.filter(function (i) { return i.category === c.key; }).length;
+        for (var i = count; i < 3; i++) grid.appendChild(galleryPlaceholder(c.key));
       });
 
       applyTranslations();

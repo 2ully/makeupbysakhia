@@ -90,3 +90,51 @@ insert into public.gallery (url, category, title, sort_order) values
   ('images/2.jpg', 'glam', 'Golden Hour Glam', 1),
   ('images/IMG_2744 - Copy.png', 'editorial', 'Editorial & Graduation', 2)
 on conflict (url) do nothing;
+
+
+-- ─────────────────────────────────────────────────────────────
+--  Categories — one row per "Explore by Category" card on the home
+--  page, which is also one gallery filter button. Managed in /admin.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.categories (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  key         text not null unique,   -- short id used in the gallery rows
+  title_en    text not null,
+  title_ar    text,
+  cover_url   text,                   -- card photo; null keeps the gradient
+  cover_path  text,
+  sort_order  int not null default 0
+);
+
+alter table public.categories enable row level security;
+
+-- The two categories the site started with.
+insert into public.categories (key, title_en, title_ar, sort_order) values
+  ('glam', 'Glam & Special Events', 'الجلام والمناسبات الخاصة', 1),
+  ('editorial', 'Editorial & Graduation', 'التصوير والتخرّج', 2)
+on conflict (key) do nothing;
+
+-- Gallery images used to be limited to those two categories; now any category
+-- in the table above is allowed.
+alter table public.gallery drop constraint if exists gallery_category_check;
+
+
+-- ─────────────────────────────────────────────────────────────
+--  Single-value site settings. Card photos lived here briefly; they
+--  now live on the categories table, and this moves any across.
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.site_settings (
+  key         text primary key,
+  value       text,
+  path        text,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+update public.categories c
+   set cover_url = s.value, cover_path = s.path
+  from public.site_settings s
+ where s.key = 'cover_' || c.key
+   and c.cover_url is null;

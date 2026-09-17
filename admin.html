@@ -101,6 +101,21 @@
         <p class="panel-hint">These images appear in the gallery on your home page.</p>
       </div>
 
+      <h3 class="section-heading">Category cards</h3>
+      <p class="panel-hint">The big cards under “Explore by Category”, which are also the gallery filter buttons.</p>
+      <div class="covers" id="covers"></div>
+
+      <form class="inline-form" id="add-category" onsubmit="addCategory(event)">
+        <div class="grid-2">
+          <label>New card title (English)<input type="text" name="title_en" placeholder="Bridal Looks" required /></label>
+          <label>Title in Arabic<input type="text" name="title_ar" dir="rtl" placeholder="إطلالات العرائس" /></label>
+        </div>
+        <div class="inline-actions">
+          <button type="submit" class="btn btn-primary btn-small">+ Add card</button>
+        </div>
+      </form>
+
+      <h3 class="section-heading">Gallery photos</h3>
       <label class="upload-box" id="upload-box">
         <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple
           onchange="uploadFiles(this.files)" hidden />
@@ -111,10 +126,7 @@
 
       <div class="upload-category">
         Add to:
-        <select id="upload-category">
-          <option value="glam">Glam &amp; Special Events</option>
-          <option value="editorial">Editorial &amp; Graduation</option>
-        </select>
+        <select id="upload-category"></select>
       </div>
 
       <div class="progress" id="upload-progress" hidden></div>

@@ -351,6 +351,10 @@ h2 {
   position: absolute;
   inset: 0;
   transition: transform 0.5s;
+  /* Default look for any category added from /admin without a photo. */
+  background: linear-gradient(160deg, #d8c9bd 0%, #a78a76 50%, #7d5e4c 100%);
+  background-size: cover;
+  background-position: center;
 }
 
 .explore-card:hover .explore-card-bg {

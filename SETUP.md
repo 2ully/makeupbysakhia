@@ -108,7 +108,13 @@ days you're away, and manage the home page gallery images.
    Pick something long. Anyone with this password can see customer details and change
    bookings. Changing it later signs everyone out of the dashboard.
 
-Uploaded gallery photos are stored in Supabase Storage in a bucket called `gallery`, which
+The Gallery tab also manages the **category cards** — the big tiles under “Explore by
+Category”, which are the same thing as the gallery filter buttons. You can add a card,
+rename it in English and Arabic, give it a photo, reorder it, or delete it. With no photo,
+a card shows a colour gradient. A card can only be deleted once it holds no photos, so
+nothing disappears from the gallery by accident.
+
+Uploaded photos are stored in Supabase Storage in a bucket called `gallery`, which
 is created automatically on the first upload. Photos are shrunk to 1600px in the browser
 before uploading, so phone photos don't waste storage. The two images that ship with the
 site (`images/…`) are listed in the gallery too and can be reordered, but deleting them

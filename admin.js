@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════
 
 var WHATSAPP_COUNTRY = '968'; // Oman, used when a phone number has no country code.
-var state = { scope: 'upcoming', images: [], blocks: [] };
+var state = { scope: 'upcoming', images: [], categories: [], blocks: [] };
 
 // ── Small helpers ──
 function $(id) { return document.getElementById(id); }
@@ -73,7 +73,7 @@ function showDashboard() {
   $('login-view').hidden = true;
   $('dash-view').hidden = false;
   loadBookings(state.scope);
-  loadGallery();
+  refreshGallery();
   loadBlocks();
 }
 
@@ -225,7 +225,7 @@ function addBooking(e) {
 
 // ── Gallery ──
 function loadGallery() {
-  api('/api/admin/gallery')
+  return api('/api/admin/gallery')
     .then(function (data) {
       state.images = data.images;
       $('stat-images').textContent = data.images.length;
@@ -236,6 +236,12 @@ function loadGallery() {
     });
 }
 
+// Photos and cards affect each other's display (counts, dropdowns), so after
+// changing either, reload both.
+function refreshGallery() {
+  return loadGallery().then(loadCategories);
+}
+
 function renderGallery() {
   var list = $('gallery-list');
   if (!state.images.length) {
@@ -244,15 +250,17 @@ function renderGallery() {
   }
 
   list.innerHTML = state.images.map(function (img, i) {
+    var options = state.categories.map(function (c) {
+      return '<option value="' + escapeHtml(c.key) + '"' +
+        (img.category === c.key ? ' selected' : '') + '>' + escapeHtml(c.title_en) + '</option>';
+    }).join('');
+
     return '<figure class="img-card">' +
       '<img src="' + escapeHtml(img.url) + '" alt="' + escapeHtml(img.title || '') + '" loading="lazy" />' +
       '<figcaption>' +
         '<input class="img-title" value="' + escapeHtml(img.title || '') + '" placeholder="Title (optional)" ' +
           'onchange="updateImage(\'' + img.id + '\', { title: this.value })" />' +
-        '<select onchange="updateImage(\'' + img.id + '\', { category: this.value })">' +
-          '<option value="glam"' + (img.category === 'glam' ? ' selected' : '') + '>Glam &amp; Events</option>' +
-          '<option value="editorial"' + (img.category === 'editorial' ? ' selected' : '') + '>Editorial &amp; Graduation</option>' +
-        '</select>' +
+        '<select onchange="updateImage(\'' + img.id + '\', { category: this.value })">' + options + '</select>' +
         '<div class="img-actions">' +
           '<button class="ghost-btn" title="Move earlier"' + (i === 0 ? ' disabled' : '') +
             ' onclick="updateImage(\'' + img.id + '\', { move: \'up\' })">↑</button>' +
@@ -265,17 +273,117 @@ function renderGallery() {
   }).join('');
 }
 
+// ── Category cards ──
+// Each card is one "Explore by Category" tile and one gallery filter button.
+// With no photo, a card keeps the colour gradient built into the site.
+function loadCategories() {
+  return api('/api/admin/categories')
+    .then(function (data) {
+      state.categories = data.categories;
+      renderCategories();
+      fillCategorySelect();
+    })
+    .catch(function (err) { toast(err.message, true); });
+}
+
+function renderCategories() {
+  var wrap = $('covers');
+  if (!state.categories.length) {
+    wrap.innerHTML = '<p class="empty">No cards yet — add one below.</p>';
+    return;
+  }
+
+  wrap.innerHTML = state.categories.map(function (c, i) {
+    var style = c.cover_url ? ' style="background-image:url(\'' + escapeHtml(c.cover_url) + '\')"' : '';
+    return '<div class="cover-card">' +
+      '<div class="cover-preview"' + style + '>' + (c.cover_url ? '' : 'No photo — plain colour') + '</div>' +
+      '<div class="cover-meta">' +
+        '<input class="img-title" value="' + escapeHtml(c.title_en) + '" placeholder="Title in English" ' +
+          'onchange="updateCategory(\'' + c.id + '\', { title_en: this.value })" />' +
+        '<input class="img-title" dir="rtl" value="' + escapeHtml(c.title_ar || '') + '" placeholder="Title in Arabic" ' +
+          'onchange="updateCategory(\'' + c.id + '\', { title_ar: this.value })" />' +
+        '<p class="cover-count">' + c.image_count + ' photo' + (c.image_count === 1 ? '' : 's') + '</p>' +
+        '<div class="img-actions">' +
+          '<label class="ghost-btn cover-pick">Photo' +
+            '<input type="file" accept="image/jpeg,image/png,image/webp" hidden ' +
+              'onchange="uploadCover(\'' + c.id + '\', this.files[0]); this.value=\'\';" /></label>' +
+          '<button class="ghost-btn" title="Move earlier"' + (i === 0 ? ' disabled' : '') +
+            ' onclick="updateCategory(\'' + c.id + '\', { move: \'up\' })">↑</button>' +
+          '<button class="ghost-btn" title="Move later"' + (i === state.categories.length - 1 ? ' disabled' : '') +
+            ' onclick="updateCategory(\'' + c.id + '\', { move: \'down\' })">↓</button>' +
+        '</div>' +
+        '<div class="img-actions">' +
+          (c.cover_url
+            ? '<button class="ghost-btn" onclick="updateCategory(\'' + c.id + '\', { clearCover: true })">Clear photo</button>'
+            : '') +
+          '<button class="ghost-btn danger" onclick="deleteCategory(\'' + c.id + '\')">Delete card</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Keep the "Add to:" dropdown in step with the cards that exist.
+function fillCategorySelect() {
+  var select = $('upload-category');
+  var chosen = select.value;
+  select.innerHTML = state.categories.map(function (c) {
+    return '<option value="' + escapeHtml(c.key) + '">' + escapeHtml(c.title_en) + '</option>';
+  }).join('');
+  if (chosen) select.value = chosen;
+}
+
+function addCategory(e) {
+  e.preventDefault();
+  var form = e.target;
+  api('/api/admin/categories', {
+    method: 'POST',
+    body: { title_en: form.title_en.value, title_ar: form.title_ar.value },
+  })
+    .then(function () {
+      form.reset();
+      toast('Card added');
+      return loadCategories();
+    })
+    .catch(function (err) { toast(err.message, true); });
+}
+
+function updateCategory(id, patch) {
+  patch.id = id;
+  api('/api/admin/categories', { method: 'PATCH', body: patch })
+    .then(function () { return loadCategories(); })
+    .catch(function (err) { toast(err.message, true); });
+}
+
+function deleteCategory(id) {
+  if (!confirm('Delete this card from the home page?')) return;
+  api('/api/admin/categories', { method: 'DELETE', body: { id: id } })
+    .then(function () { toast('Card deleted'); return loadCategories(); })
+    .catch(function (err) { toast(err.message, true); });
+}
+
+function uploadCover(id, file) {
+  if (!file) return;
+  toast('Uploading…');
+  shrinkImage(file, 1400)
+    .then(function (dataUrl) {
+      return api('/api/admin/categories', { method: 'PATCH', body: { id: id, dataUrl: dataUrl } });
+    })
+    .then(function () { toast('Card photo updated'); return loadCategories(); })
+    .catch(function (err) { toast(err.message, true); });
+}
+
 function updateImage(id, patch) {
   patch.id = id;
   api('/api/admin/gallery', { method: 'PATCH', body: patch })
-    .then(function () { loadGallery(); })
+    .then(function () { refreshGallery(); })
     .catch(function (err) { toast(err.message, true); });
 }
 
 function deleteImage(id) {
   if (!confirm('Remove this image from the gallery?')) return;
   api('/api/admin/gallery', { method: 'DELETE', body: { id: id } })
-    .then(function () { toast('Image removed'); loadGallery(); })
+    .then(function () { toast('Image removed'); refreshGallery(); })
     .catch(function (err) { toast(err.message, true); });
 }
 
@@ -315,7 +423,7 @@ function uploadFiles(files) {
   function next() {
     if (!queue.length) {
       progress.hidden = true;
-      loadGallery();
+      refreshGallery();
       return;
     }
     var file = queue.shift();

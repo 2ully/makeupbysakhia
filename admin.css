@@ -437,6 +437,46 @@ input:focus, select:focus, textarea:focus {
 
 .img-actions .ghost-btn { flex: 1; padding: 6px 8px; text-align: center; }
 
+/* ── Category card covers ── */
+.section-heading {
+  font-size: 1.3rem;
+  margin-bottom: 2px;
+}
+
+.covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin: 14px 0 30px;
+}
+
+.cover-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.cover-preview {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(160deg, #d4c4b8 0%, #a08070 50%, #7a5a4a 100%);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.cover-meta { padding: 12px; }
+.cover-meta strong { font-weight: 400; font-size: 0.9rem; display: block; margin-bottom: 8px; }
+.cover-meta .img-title { margin-bottom: 6px; }
+.cover-meta .img-actions { margin-top: 6px; }
+.cover-count { font-size: 0.75rem; color: var(--brown-light); }
+.cover-pick { text-align: center; cursor: pointer; flex: 1; }
+
 /* ── Toast ── */
 .toast {
   position: fixed;

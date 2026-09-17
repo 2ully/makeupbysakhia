@@ -1,14 +1,18 @@
-import { getSupabase, requireAdmin, readJsonBody, getGallery } from '../_lib.js';
+import {
+  getSupabase,
+  requireAdmin,
+  readJsonBody,
+  getGallery,
+  getCategories,
+  storeImage,
+  deleteStoredImage,
+} from '../_lib.js';
 
-const BUCKET = 'gallery';
-const ALLOWED = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
-const MAX_BYTES = 4 * 1024 * 1024; // Vercel caps request bodies at ~4.5MB.
-
-// /api/admin/gallery — the home page images.
-//   GET    list every image
-//   POST   { dataUrl, category, title }   upload a new image
+// /api/admin/gallery — the photos in the home page gallery strip.
+//   GET    list every image (plus the categories, for the dropdowns)
+//   POST   { dataUrl, category, title }      upload a photo
 //   PATCH  { id, category?, title?, move? }  edit or reorder ("up" / "down")
-//   DELETE { id }                         remove image + stored file
+//   DELETE { id }                            remove photo + stored file
 export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
 
@@ -16,7 +20,8 @@ export default async function handler(req, res) {
     const supabase = getSupabase();
 
     if (req.method === 'GET') {
-      return res.status(200).json({ images: await getGallery() });
+      const [images, categories] = await Promise.all([getGallery(), getCategories()]);
+      return res.status(200).json({ images, categories });
     }
     if (req.method === 'POST') return upload(req, res, supabase);
     if (req.method === 'PATCH') return edit(req, res, supabase);
@@ -28,44 +33,23 @@ export default async function handler(req, res) {
   }
 }
 
-// Create the storage bucket on first use so there is no manual dashboard step.
-async function ensureBucket(supabase) {
-  const { data } = await supabase.storage.getBucket(BUCKET);
-  if (data) return;
-  const { error } = await supabase.storage.createBucket(BUCKET, {
-    public: true,
-    fileSizeLimit: MAX_BYTES,
-  });
-  // Ignore "already exists" — two uploads at once can race here.
-  if (error && !/exist/i.test(error.message || '')) throw error;
+// Fall back to the first category if the browser sent one we don't know.
+async function safeCategory(wanted) {
+  const categories = await getCategories();
+  if (!categories.length) return null;
+  return categories.some((c) => c.key === wanted) ? wanted : categories[0].key;
 }
 
 async function upload(req, res, supabase) {
   const { dataUrl, category, title } = await readJsonBody(req);
 
-  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl || '');
-  if (!match) return res.status(400).json({ error: 'Invalid image data' });
+  const key = await safeCategory(category);
+  if (!key) return res.status(400).json({ error: 'Add a category first' });
 
-  const contentType = match[1];
-  const ext = ALLOWED[contentType];
-  if (!ext) return res.status(400).json({ error: 'Only JPG, PNG and WebP images are allowed' });
+  const stored = await storeImage(dataUrl);
+  if (stored.error) return res.status(stored.status).json({ error: stored.error });
 
-  const bytes = Buffer.from(match[2], 'base64');
-  if (bytes.length > MAX_BYTES) {
-    return res.status(413).json({ error: 'Image is too large — please pick a smaller one' });
-  }
-
-  await ensureBucket(supabase);
-
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, bytes, { contentType, cacheControl: '31536000', upsert: false });
-  if (uploadError) throw uploadError;
-
-  const { data: publicUrl } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
-  // New images go to the end of the strip.
+  // New photos go to the end of the strip.
   const { data: last } = await supabase
     .from('gallery')
     .select('sort_order')
@@ -74,9 +58,9 @@ async function upload(req, res, supabase) {
     .maybeSingle();
 
   const { data, error } = await supabase.from('gallery').insert({
-    url: publicUrl.publicUrl,
-    path,
-    category: category === 'editorial' ? 'editorial' : 'glam',
+    url: stored.url,
+    path: stored.path,
+    category: key,
     title: title ? String(title).slice(0, 120) : null,
     sort_order: (last ? last.sort_order : 0) + 1,
   }).select().maybeSingle();
@@ -109,7 +93,7 @@ async function edit(req, res, supabase) {
   }
 
   const patch = {};
-  if (category) patch.category = category === 'editorial' ? 'editorial' : 'glam';
+  if (category) patch.category = await safeCategory(category);
   if (title !== undefined) patch.title = title ? String(title).slice(0, 120) : null;
   if (!Object.keys(patch).length) return res.status(400).json({ error: 'Nothing to update' });
 
@@ -128,11 +112,8 @@ async function remove(req, res, supabase) {
   if (findError) throw findError;
   if (!image) return res.status(404).json({ error: 'Image not found' });
 
-  // Only uploaded images have a storage path; the seeded ones ship with the site.
-  if (image.path) {
-    const { error: storageError } = await supabase.storage.from(BUCKET).remove([image.path]);
-    if (storageError) console.error('Could not delete stored file:', storageError);
-  }
+  // Only uploaded photos have a storage path; the seeded ones ship with the site.
+  await deleteStoredImage(image.path);
 
   const { error } = await supabase.from('gallery').delete().eq('id', id);
   if (error) throw error;

@@ -115,6 +115,71 @@ export async function getGallery() {
   return data || [];
 }
 
+// Categories power the "Explore by Category" cards and the gallery filter.
+export async function getCategories() {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('categories')
+    .select('id, key, title_en, title_ar, cover_url, sort_order')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+// ── Image storage ──
+// Uploaded photos live in one public Supabase Storage bucket.
+export const IMAGE_BUCKET = 'gallery';
+const ALLOWED_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // Vercel caps request bodies at ~4.5MB.
+
+// Create the bucket on first use so there is no manual dashboard step.
+async function ensureBucket(supabase) {
+  const { data } = await supabase.storage.getBucket(IMAGE_BUCKET);
+  if (data) return;
+  const { error } = await supabase.storage.createBucket(IMAGE_BUCKET, {
+    public: true,
+    fileSizeLimit: MAX_IMAGE_BYTES,
+  });
+  // Ignore "already exists" — two uploads at once can race here.
+  if (error && !/exist/i.test(error.message || '')) throw error;
+}
+
+// Decode a data: URL from the browser and store it. Returns { url, path } on
+// success, or { error, status } for anything the caller should reject.
+export async function storeImage(dataUrl) {
+  const supabase = getSupabase();
+  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl || '');
+  if (!match) return { error: 'Invalid image data', status: 400 };
+
+  const contentType = match[1];
+  const ext = ALLOWED_TYPES[contentType];
+  if (!ext) return { error: 'Only JPG, PNG and WebP images are allowed', status: 400 };
+
+  const bytes = Buffer.from(match[2], 'base64');
+  if (bytes.length > MAX_IMAGE_BYTES) {
+    return { error: 'Image is too large — please pick a smaller one', status: 413 };
+  }
+
+  await ensureBucket(supabase);
+
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from(IMAGE_BUCKET)
+    .upload(path, bytes, { contentType, cacheControl: '31536000', upsert: false });
+  if (uploadError) throw uploadError;
+
+  const { data: publicUrl } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+  return { path, url: publicUrl.publicUrl };
+}
+
+// Best-effort cleanup — a missing file should never fail the request.
+export async function deleteStoredImage(path) {
+  if (!path) return;
+  const { error } = await getSupabase().storage.from(IMAGE_BUCKET).remove([path]);
+  if (error) console.error('Could not delete stored file:', error);
+}
+
 // ── Admin authentication ──
 // One shared password (ADMIN_PASSWORD). After signing in, the browser holds a
 // signed cookie instead of the password itself. The signing key is derived from
