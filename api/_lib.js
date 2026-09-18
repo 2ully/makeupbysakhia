@@ -17,6 +17,62 @@ export const TIME_SLOTS = [
 // Maximum number of sessions (active bookings) allowed per day.
 export const MAX_PER_DAY = 4;
 
+// How long a submitted-but-unanswered booking keeps its slot. Customers send
+// their details on WhatsApp after submitting; if they never do, the hold has to
+// let go or the calendar fills up with bookings nobody knows about.
+export const PENDING_HOLD_HOURS = 48;
+
+// Oman is UTC+4 all year. The server runs in UTC, so "today" and "now" have to
+// be worked out in the owner's time, not the server's.
+const OMAN_OFFSET_MS = 4 * 60 * 60 * 1000;
+
+export function omanNow() {
+  return new Date(Date.now() + OMAN_OFFSET_MS);
+}
+
+// Today's date in Oman, as YYYY-MM-DD.
+export function omanToday() {
+  return omanNow().toISOString().slice(0, 10);
+}
+
+// "3:00 PM" → 15. Returns null for anything unexpected.
+export function slotHour(time) {
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(time || '').trim());
+  if (!match) return null;
+  let hour = Number(match[1]) % 12;
+  if (match[3].toUpperCase() === 'PM') hour += 12;
+  return hour;
+}
+
+// Slots that have already passed today, so nobody can book 1 PM at 5 PM.
+export function pastSlotsForDate(date) {
+  if (date !== omanToday()) return [];
+  const hourNow = omanNow().getUTCHours(); // getUTC* on the shifted date = Oman time
+  return TIME_SLOTS.filter((slot) => {
+    const hour = slotHour(slot);
+    return hour !== null && hour <= hourNow;
+  });
+}
+
+// Release holds that were never followed through. They become 'declined', which
+// is the status that frees the slot, and they stay visible in /admin.
+// Pass a date/time to release just that slot.
+export async function expireStaleHolds(date, time) {
+  const cutoff = new Date(Date.now() - PENDING_HOLD_HOURS * 60 * 60 * 1000).toISOString();
+  let query = getSupabase()
+    .from('bookings')
+    .update({ status: 'declined' })
+    .eq('status', 'pending')
+    .lt('created_at', cutoff);
+
+  if (date) query = query.eq('date', date);
+  if (time) query = query.eq('time', time);
+
+  const { data, error } = await query.select('id');
+  if (error) throw error;
+  return (data || []).length;
+}
+
 // Supabase client using the service-role key — server-side only, never shipped
 // to the browser. Created lazily so a missing env var fails loudly per-request.
 let _supabase;
@@ -34,16 +90,26 @@ export function getSupabase() {
   return _supabase;
 }
 
-// Read the active (pending OR confirmed) bookings for a date.
+// Read the active (pending OR confirmed) bookings for a date. Holds that have
+// timed out are released first, so their slots show as free straight away.
 export async function getActiveBookingsForDate(date) {
   const supabase = getSupabase();
+  const cutoff = new Date(Date.now() - PENDING_HOLD_HOURS * 60 * 60 * 1000).toISOString();
+
   const { data, error } = await supabase
     .from('bookings')
-    .select('time')
+    .select('time, status, created_at')
     .eq('date', date)
     .in('status', ['pending', 'confirmed']);
   if (error) throw error;
-  return data || [];
+
+  const rows = data || [];
+  const stale = rows.filter((b) => b.status === 'pending' && b.created_at < cutoff);
+  if (stale.length) {
+    await expireStaleHolds(date);
+    return rows.filter((b) => stale.indexOf(b) === -1);
+  }
+  return rows;
 }
 
 // Days/slots the owner closed from /admin. A row with time = null closes the

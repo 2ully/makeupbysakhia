@@ -83,7 +83,7 @@ var TRANSLATIONS = {
     'footer.bookNow': 'Book Now',
     'footer.glamEvents': 'Glam Events',
     'footer.graduations': 'Graduations',
-    'footer.bottom': '© 2026 Mekup by Skhia · All rights reserved · Made with ♥',
+    'footer.bottom': '© 2026 Mekup by Sakhia · All rights reserved · Made with ♥',
 
     'js.sending': 'Sending…',
     'js.checking': 'Checking availability…',

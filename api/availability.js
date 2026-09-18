@@ -1,4 +1,10 @@
-import { TIME_SLOTS, MAX_PER_DAY, getActiveBookingsForDate, getBlocksForDate } from './_lib.js';
+import {
+  TIME_SLOTS,
+  MAX_PER_DAY,
+  getActiveBookingsForDate,
+  getBlocksForDate,
+  pastSlotsForDate,
+} from './_lib.js';
 
 // GET /api/availability?date=YYYY-MM-DD
 // Returns which time slots are taken and whether the day is full, so the
@@ -19,8 +25,11 @@ export default async function handler(req, res) {
       getBlocksForDate(date),
     ]);
 
-    // Taken = already booked, plus any individual slots the owner closed.
-    const taken = active.map((b) => b.time).concat(blocks.times);
+    // Taken = already booked, slots the owner closed, and — if this is today —
+    // the times that have already gone by in Oman.
+    const taken = active.map((b) => b.time)
+      .concat(blocks.times)
+      .concat(pastSlotsForDate(date));
     const openSlots = TIME_SLOTS.filter((s) => taken.indexOf(s) === -1).length;
     // The day is unavailable if the owner closed it, the daily cap is reached,
     // or nothing is left to book.

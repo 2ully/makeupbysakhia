@@ -5,6 +5,9 @@ import {
   getSupabase,
   getActiveBookingsForDate,
   getBlocksForDate,
+  omanToday,
+  pastSlotsForDate,
+  expireStaleHolds,
 } from './_lib.js';
 
 // POST /api/submit
@@ -32,10 +35,13 @@ export default async function handler(req, res) {
   if (!TIME_SLOTS.includes(time)) {
     return res.status(400).json({ error: 'Invalid time slot' });
   }
-  // Reject bookings for dates in the past (compare as plain YYYY-MM-DD strings).
-  const today = new Date().toISOString().slice(0, 10);
-  if (date < today) {
+  // Reject past dates, and times that have already gone by today — both judged
+  // in Oman time, not the server's UTC.
+  if (date < omanToday()) {
     return res.status(400).json({ error: 'That date has already passed' });
+  }
+  if (pastSlotsForDate(date).indexOf(time) !== -1) {
+    return res.status(409).json({ error: 'slot_taken', message: 'That time has already passed today.' });
   }
 
   try {
@@ -63,7 +69,7 @@ export default async function handler(req, res) {
     // the column is still NOT NULL, so one is generated here.
     const token = randomUUID() + randomUUID().replace(/-/g, '');
 
-    const { error: insertError } = await supabase.from('bookings').insert({
+    const row = {
       fname: String(fname).slice(0, 100),
       lname: String(lname).slice(0, 100),
       email: String(email).slice(0, 200),
@@ -75,10 +81,20 @@ export default async function handler(req, res) {
       status: 'pending',
       token,
       lang: language,
-    });
+    };
+
+    let { error: insertError } = await supabase.from('bookings').insert(row);
+
+    // 23505 = unique violation → something else already holds this slot. If that
+    // something is a hold that has timed out, release it and try once more.
+    if (insertError && insertError.code === '23505') {
+      const released = await expireStaleHolds(date, time);
+      if (released) {
+        ({ error: insertError } = await supabase.from('bookings').insert(row));
+      }
+    }
 
     if (insertError) {
-      // 23505 = unique violation → the slot was taken between our check and insert.
       if (insertError.code === '23505') {
         return res.status(409).json({ error: 'slot_taken', message: 'That time was just booked. Please pick another.' });
       }

@@ -118,5 +118,10 @@ site (`images/…`) are listed in the gallery too and can be reordered, but dele
 only removes them from the page — the files stay in the repo.
 
 ## Notes
+- **Unanswered bookings expire after 48 hours.** If a customer submits the form but never
+  presses send in WhatsApp, the slot is released automatically so the calendar stays clean.
+  In /admin they show up as `declined`. Change the window with `PENDING_HOLD_HOURS` in
+  `api/_lib.js`.
+- **Times that have passed today can't be booked** — checked in Oman time (UTC+4).
 - Times offered: 1–6 PM, max 4 bookings/day. To change these, edit `TIME_SLOTS` /
   `MAX_PER_DAY` in `api/_lib.js` and the matching `<option>`s in `index.html`.
